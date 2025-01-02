@@ -8,10 +8,10 @@ min_length = config.get('jina', {}).get('min_length', 10)
 
 @tool(parse_docstring=True)
 def jina_reader(url: str) -> str:
-    """Get URL Content.
+    """Get URL Content
     
     Args:
-        url: The URL whose content needs to be fetched
+        url: The URL whose content needs to be fetched / The URL to fetch content from / The URL from which to retrieve content
     """
 
     url = f'https://r.jina.ai/{url}'
@@ -38,4 +38,3 @@ def jina_reader(url: str) -> str:
         return "未知错误"
 
 tools = [jina_reader]
-

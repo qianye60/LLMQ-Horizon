@@ -14,7 +14,7 @@ client = OpenAI(
 
 @tool(parse_docstring=True)
 def analyze_image(query: str, image_input: str) -> str:
-    """Get and return the content and information in the image according to the query requirements.  It can also analyze the image.
+    """Obtain detailed image content or analyze the image as requested.
 
     Args:
         query: The image information to be retrieved.

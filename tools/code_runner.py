@@ -331,7 +331,7 @@ def code_runner(source_code: str, language: str, stdin: str = None) -> str:
     Args:
         source_code: Only used the standard library/core library, and the source code is correctly formatted.
         language: Programming language. Optional: python3, python2, Assembly, Bash, C, C++, Clojure, C#, COBOL, Common Lisp, D, Elixir, F#, Fortran, Go, Groovy, Haskell, Java, JavaScript, Kotlin, Lua, OCaml, Octave, Pascal, Perl, PHP, Plain Text, Python, Python2, R, Ruby, Rust, Scala, SQL, Swift, TypeScript, Visual Basic .Net
-        stdin: Standard input required to run the program, optional, defaults to None
+        stdin: Standard input required to run the program, optional
     """
     language_id = _find_best_lang_match_(language)
     if language_id is None:

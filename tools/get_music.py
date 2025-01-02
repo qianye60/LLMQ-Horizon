@@ -2,7 +2,8 @@ from langchain_core.tools import tool
 import requests
 import re
 
-def _get_hhlq_music(music_name):
+@tool(parse_docstring=True)
+def _get_hhlq_music(music_name) -> str:
     """
     获取红海龙淇API的音乐链接
     """
@@ -15,7 +16,6 @@ def _get_hhlq_music(music_name):
     except Exception as e:
         return f"Failed to get music link: {str(e)}"
 
-@tool(parse_docstring=True)
 def get_music(music_name: str, provider: str = "hhlq") -> str:
     """Search and get music
     
@@ -28,7 +28,7 @@ def get_music(music_name: str, provider: str = "hhlq") -> str:
     }
     
     if provider in provider_map:
-        return f"Tool Response: {provider_map[provider](music_name)}"
+        return provider_map[provider](music_name)
     else:
         return "Unsupported music API provider"
 

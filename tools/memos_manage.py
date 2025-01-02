@@ -150,19 +150,17 @@ def _delete_memo(base_url, headers, memo_ids):
     return {"results": results}
 
 memos_config = config.get("memos", {})
-
 @tool(parse_docstring=True)
-def memos_manage(operation: str, create_content: str = None, search_keyword: str = None, 
-                delete_id: str = None, limit: int = None, user_name: str = None) -> str:
+def memos_manage(operation: str, create_content: str = None, search_keyword: str = None, delete_id: str = None, limit: int = None, user_name: str = None) -> str:
     """Create, retrieve, and delete memos, operate on memos, and use memos.
 
     Args:
         operation: The type of operation, which can be "create", "search", or "delete".
-        create_content: The content to be recorded in the memo. Use ###%%& as a separator for multiple memos (only used when the operation is "create"). Optional
-        search_keyword: The keyword(s) to search for memos. Multiple keywords are separated by commas. If not provided, the latest memos will be returned (only used when the operation is "search"). Optional.
-        delete_id: The ID(s) of the memo(s) to be deleted. Multiple IDs are supported and separated by commas (only used when the operation is "delete"). Optional.
-        limit: Limits the number of search results (only used when the operation is "search"). Optional.
-        user_name: When the operation is "create", it is added as a prefix to the content; when the operation is "search", it is used as a search keyword. Optional.
+        create_content: The content to be recorded in the memo. Use ###%%& as a separator for multiple memos (only used when the operation is "create").
+        search_keyword: The keyword(s) to search for memos. Multiple keywords are separated by commas. If not provided, the latest memos will be returned (only used when the operation is "search").
+        delete_id: The ID(s) of the memo(s) to be deleted. Multiple IDs are supported and separated by commas (only used when the operation is "delete").
+        limit: Limits the number of search results (only used when the operation is "search").
+        user_name: When the operation is "create", it is added as a prefix to the content; when the operation is "search", it is used as a search keyword.
     """
     global memos_config
     if (memos_config is None):
