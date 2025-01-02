@@ -107,4 +107,3 @@ class Config(BaseModel):
             raise RuntimeError(f"Failed to load config.toml: {str(e)}")
 
 plugin_config = Config.load_config()
-
