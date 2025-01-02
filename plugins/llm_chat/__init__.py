@@ -14,15 +14,21 @@ from nonebot.adapters.onebot.v11.exception import ActionFailed
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 from .graph import build_graph, get_llm, format_messages_for_print
-from typing import Dict
 from datetime import datetime
+from typing import Dict
 from random import choice
 from .config import Config
+from .utils import (
+    extract_media_urls,
+    send_in_chunks,
+    get_user_name,
+    build_message_content,
+    remove_trigger_words,
+)
 import asyncio
 import os
 import re
-
-
+from .config import plugin_config
 
 
 __plugin_meta__ = PluginMetadata(
@@ -31,8 +37,6 @@ __plugin_meta__ = PluginMetadata(
     usage="@机器人 或关键词，或使用命令前缀触发对话",
     config=Config,
 )
-
-plugin_config = Config.load_config()
 
 os.environ["OPENAI_API_KEY"] = plugin_config.llm.api_key
 os.environ["OPENAI_BASE_URL"] = plugin_config.llm.base_url
@@ -47,6 +51,51 @@ class Session:
         # 最后访问时间
         self.last_accessed = datetime.now()
         self.graph = None
+        self.lock = asyncio.Lock()  # 添加会话锁
+        self.processing = False  # 添加处理状态标志
+        self.processing_start_time = None  # 处理开始时间
+
+    @property
+    def is_expired(self) -> bool:
+        """判断会话是否过期"""
+        now = datetime.now()
+        # 超过CLEANUP_INTERVAL秒未访问则过期
+        return (now - self.last_accessed).total_seconds() > CLEANUP_INTERVAL
+        
+    @property
+    def is_processing_timeout(self) -> bool:
+        """判断处理是否超时"""
+        if not self.processing or not self.processing_start_time:
+            return False
+        now = datetime.now()
+        # 处理时间超过60秒判定为超时
+        return (now - self.processing_start_time).total_seconds() > 60
+        
+    def refresh(self):
+        """刷新最后访问时间"""
+        self.last_accessed = datetime.now()
+
+    def try_acquire_lock(self) -> bool:
+        """尝试获取锁"""
+        if self.processing:
+            if self.is_processing_timeout:
+                self.processing = False
+                self.processing_start_time = None
+            else:
+                return False
+        return True
+
+    async def start_processing(self):
+        """开始处理"""
+        self.processing = True 
+        self.processing_start_time = datetime.now()
+        self.refresh()
+
+    async def end_processing(self):
+        """结束处理"""
+        self.processing = False
+        self.processing_start_time = None
+        self.refresh()
 
 # "group_123456_789012": Session对象1
 sessions: Dict[str, Session] = {}
@@ -54,45 +103,102 @@ sessions: Dict[str, Session] = {}
 # 添加异步锁保护sessions字典
 sessions_lock = asyncio.Lock()
 
+CLEANUP_INTERVAL = 600  # 会话清理间隔(秒) 例:10分钟
+LAST_CLEANUP_TIME = datetime.now()
+
+async def cleanup_sessions():
+    """清理过期会话"""
+    async with sessions_lock:
+        expired_keys = [k for k, s in sessions.items() if s.is_expired]
+        for k in expired_keys:
+            del sessions[k]
+    return len(expired_keys)
+
 async def get_or_create_session(thread_id: str) -> Session:
-    """异步获取或创建会话"""
+    """获取或创建会话,同时处理清理"""
+    global LAST_CLEANUP_TIME
+    
+    # 每隔CLEANUP_INTERVAL秒检查一次过期会话
+    now = datetime.now()
+    if (now - LAST_CLEANUP_TIME).total_seconds() > CLEANUP_INTERVAL:
+        cleaned = await cleanup_sessions()
+        if cleaned > 0:
+            print(f"已清理 {cleaned} 个过期会话")
+        LAST_CLEANUP_TIME = now
+
     async with sessions_lock:
         if thread_id not in sessions:
             sessions[thread_id] = Session(thread_id)
         session = sessions[thread_id]
-        session.last_accessed = datetime.now()
-    return session
+        session.refresh()
+        return session
 
-async def cleanup_old_sessions():
-    """异步清理过期的会话"""
-    async with sessions_lock:
-        if len(sessions) > plugin_config.plugin.max_sessions:
-            # 按最后访问时间排序，删除最旧的会话
-            sorted_sessions = sorted(
-                sessions.items(),
-                key=lambda x: x[1].last_accessed,
-                reverse=True
-            )
-            # 保留配置指定数量的会话
-            for thread_id, _ in sorted_sessions[plugin_config.plugin.max_sessions:]:
-                del sessions[thread_id]
 
 # 初始化模型和对话图
-llm = get_llm()
-graph_builder = build_graph(plugin_config, llm)
+llm = None
+graph_builder = None
+
+async def initialize_resources():
+    global llm, graph_builder
+    if llm is None:
+        llm = await get_llm()
+        graph_builder = await build_graph(plugin_config, llm)
+
+
+async def _process_llm_response(result: dict) -> str:
+    """处理LLM返回的消息，提取回复内容"""
+    if not result["messages"]:
+        print("警告: 结果消息列表为空")
+        return plugin_config.responses.assistant_empty_reply
+        
+    last_message = result["messages"][-1]
+    
+    if isinstance(last_message, AIMessage):
+        if last_message.invalid_tool_calls:
+            if isinstance(last_message.invalid_tool_calls, list) and last_message.invalid_tool_calls:
+                error_msg = last_message.invalid_tool_calls[0]['error']
+                print(f"工具调用错误: {error_msg}")
+                return f"工具调用失败: {error_msg}"
+            print("工具调用错误: 未知错误(无错误信息)")
+            return "工具调用失败，但没有错误信息"
+            
+        if last_message.content:
+            return last_message.content.strip()
+            
+        print("警告: AI消息内容为空")
+        return "对不起，我没有理解您的问题。"
+        
+    if isinstance(last_message, ToolMessage) and last_message.content:
+        return (last_message.content 
+                if isinstance(last_message.content, str)
+                else str(last_message.content))
+                
+    print(f"警告: 未知的消息类型或内容为空: {type(last_message)}")
+    return "对不起，我没有理解您的问题。"
+
+
+async def _handle_langgraph_error(e: Exception, thread_id: str) -> str:
+    """处理 LangGraph 调用的异常"""
+    error_message = str(e)
+    print(f"调用 LangGraph 时发生错误: {error_message}")
+    print(f"错误类型: {type(e)}")
+    print(f"完整异常信息: {e}")
+    
+    if "insufficient tool messages following tool_calls message" in error_message:
+        print("工具调用消息序列不完整错误，重置会话状态")
+        async with sessions_lock:
+            if thread_id in sessions:
+                del sessions[thread_id]
+        await chat_handler.finish("对话状态异常已重置，请重试")
+        return
+        
+    return (plugin_config.responses.token_limit_error 
+            if "'list' object has no attribute 'strip'" in error_message
+            else plugin_config.responses.general_error)
 
 
 
-
-
-
-
-
-
-
-
-
-def chat_rule(event: Event) -> bool:
+def _chat_rule(event: Event) -> bool:
     """定义触发规则"""
     trigger_mode = plugin_config.plugin.trigger_mode
     trigger_words = plugin_config.plugin.trigger_words
@@ -112,54 +218,7 @@ def chat_rule(event: Event) -> bool:
         return event.is_tome()
     return False
 
-chat_handler = on_message(rule=chat_rule, priority=10, block=True)
-
-def remove_trigger_words(text: str, message: Message) -> str:
-    """移除命令前缀(包括@和昵称)，保留关键词"""
-    # 删除所有@片段
-    text = str(message).strip()
-    for seg in message:
-        if seg.type == "at":
-            text = text.replace(str(seg), "").strip()
-    
-    # 移除命令前缀
-    if hasattr(plugin_config.plugin, 'trigger_words'):
-        for cmd in plugin_config.plugin.trigger_words:
-            if text.startswith(cmd):
-                text = text[len(cmd):].strip()
-                break
-    
-    return text
-
-def calculate_typing_delay(text: str) -> float:
-    """
-    计算模拟打字延迟
-    基于配置的每秒处理字符数计算延迟
-    """
-    delay = len(text) / plugin_config.plugin.chunk.char_per_s
-    return min(delay, plugin_config.plugin.chunk.max_time)
-
-async def send_in_chunks(response: str) -> bool:
-    """
-    分段发送逻辑, 返回True表示已完成发送, 否则False
-    """
-    for sep in plugin_config.plugin.chunk.words:
-        if sep in response:
-            chunks = response.split(sep)
-            for i, chunk in enumerate(chunks):
-                chunk = chunk.strip()
-                if not chunk:
-                    continue
-                for word in plugin_config.plugin.chunk.words:
-                    chunk = chunk.replace(word, "")
-                chunk = chunk.strip()
-                if i == len(chunks) - 1:
-                    await chat_handler.finish(Message(chunk))
-                else:
-                    await chat_handler.send(Message(chunk))
-                    await asyncio.sleep(calculate_typing_delay(chunk))
-            return True
-    return False
+chat_handler = on_message(rule=_chat_rule, priority=10, block=True)
 
 @chat_handler.handle()
 async def handle_chat(
@@ -168,82 +227,38 @@ async def handle_chat(
     # 提取各种消息段
     message: Message = EventMessage(),
     # 提取纯文本
-    plain_text: str = EventPlainText()
+    plain_text: str = EventPlainText(),
 ):
+    global llm, graph_builder
+    
+    cleaned_message = await remove_trigger_words(message, event)
+    if not cleaned_message or cleaned_message.isspace():
+        await chat_handler.finish(Message(choice(plugin_config.responses.empty_message_replies)))
+        return
+        
+    # 确保 llm 已初始化
+    if llm is None:
+        await initialize_resources()
+    
     # 检查群聊/私聊开关，判断消息对象是否是群聊/私聊的实例
     if (isinstance(event, GroupMessageEvent) and not plugin_config.plugin.enable_group) or \
        (not isinstance(event, GroupMessageEvent) and not plugin_config.plugin.enable_private):
         await chat_handler.finish(plugin_config.responses.disabled_message)
-        
-    # 获取用户名
-    user_name = ""  # 初始化为空字符串
-    if plugin_config.plugin.enable_username:
-        user_name = event.sender.nickname if event.sender.nickname else event.sender.card
-        if not user_name:
-            try:
-                if isinstance(event, GroupMessageEvent):
-                    user_info = await event.bot.get_group_member_info(group_id=event.group_id, user_id=event.user_id)
-                    user_name = user_info.get("nickname") or user_info.get("card") or str(event.user_id)
-                else:
-                    user_info = await event.bot.get_stranger_info(user_id=event.user_id)
-                    user_name = user_info.get("nickname") or str(event.user_id)
-            except Exception as e:
-                print(f"获取用户信息失败: {e}")
-                user_name = str(event.user_id)
-    print(user_name)
-    image_urls = [
-        seg.data["url"]
-        for seg in message
-        if seg.type == "image" and seg.data.get("url")
-    ]
-    if event.reply:
-        image_urls.extend(
-            seg.data["url"]
-            for seg in event.reply.message
-            if seg.type == "image" and seg.data.get("url")
-        )
-    
-    # 提取视频链接
-    video_urls = [
-        seg.data["url"]
-        for seg in message
-        if seg.type == "video" and seg.data.get("url")
-    ]
-    if event.reply:
-       video_urls.extend(
-            seg.data["url"]
-            for seg in event.reply.message
-            if seg.type == "video" and seg.data.get("url")
-       )
-    # 提取MP3链接
-    audio_urls = [
-        seg.data["url"]
-        for seg in message
-        if seg.type == "audio" and seg.data.get("url")
-    ]
-    if event.reply:
-        audio_urls.extend(
-            seg.data["url"]
-            for seg in event.reply.message
-            if seg.type == "audio" and seg.data.get("url")
-        )
 
-    # 处理消息内容,移除触发词
-    full_content = remove_trigger_words(plain_text, message)
+
+    # ----------------- 对话消息体构建START -----------------
+    # 获取用户名
+    user_name = await get_user_name(event)
+
+    # 提取媒体链接
+    media_urls = await extract_media_urls(message, event.reply.message if event.reply else None)
+
+    # 构建消息内容
+    message_content = await build_message_content(message, media_urls, event, user_name)
     
-    # 如果全是空白字符,使用配置中的随机回复
-    if not full_content.strip():
-        reply = choice(plugin_config.responses.empty_message_replies)
-        await chat_handler.finish(Message(reply))
-    
-    if image_urls:
-        full_content += "\n图片URL：" + "\n".join(image_urls)
-    if video_urls:
-        full_content += "\n视频URL：" + "\n".join(video_urls)
-    if audio_urls:
-        full_content += "\n音频URL：" + "\n".join(audio_urls)
-    
-    # 构建会话ID
+    # ----------------- 对话消息体构建END -----------------
+
+    # 构建会话ID，创建或获取Session对象
     if isinstance(event, GroupMessageEvent):
         if plugin_config.plugin.group_chat_isolation:
             thread_id = f"group_{event.group_id}_{event.user_id}"
@@ -252,115 +267,102 @@ async def handle_chat(
     else:
         thread_id = f"private_{event.user_id}"
     print(f"Current thread: {thread_id}")
-    await cleanup_old_sessions()
     session = await get_or_create_session(thread_id)
-    # 如果当前会话没有图，则创建一个
-    if session.graph is None:
-        session.graph = graph_builder.compile(checkpointer=session.memory)
+
+
+    # ---------- 判断当前会话ID对应的会话是否在处理中，如无则调用langgraph START ----------
+    
+    # 处理会话锁
     try:
-        # 在发送给 LangGraph 的消息内容中添加用户名
-        if plugin_config.plugin.enable_username and user_name:
-            message_content = f"{user_name}: {full_content}"
-        else:
-            message_content = full_content
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None,
-            session.graph.invoke,
+        if not await asyncio.wait_for(session.lock.acquire(), timeout=1.0):
+            await chat_handler.finish(Message(plugin_config.responses.session_busy_message))
+            return
+    except asyncio.TimeoutError:
+        await chat_handler.finish(Message(plugin_config.responses.session_busy_message)) 
+        return
+        
+    try:
+        if not session.try_acquire_lock():
+            await chat_handler.finish(Message(plugin_config.responses.session_busy_message))
+            return
+            
+        await session.start_processing()
+        # 如果当前会话没有图，则创建一个
+        if session.graph is None:
+            session.graph = graph_builder.compile(checkpointer=session.memory)
+
+        # 调用 LangGraph
+        result = await session.graph.ainvoke(
             {"messages": [HumanMessage(content=message_content)]},
             {"configurable": {"thread_id": thread_id}},
         )
-        formatted_output = format_messages_for_print(result["messages"])
-        print(formatted_output)
-        if not result["messages"]:
-            response = "对不起，我现在无法回答。"
-        else:
-            last_message = result["messages"][-1]
-            if isinstance(last_message, AIMessage):
-                if last_message.invalid_tool_calls:
-                    if isinstance(last_message.invalid_tool_calls, list) and last_message.invalid_tool_calls:
-                        response = f"工具调用失败: {last_message.invalid_tool_calls[0]['error']}"
-                    else:
-                        response = "工具调用失败，但没有错误信息"
-                elif last_message.content:
-                    response = last_message.content.strip()
-                else:
-                    response = "对不起，我没有理解您的问题。"
-            elif isinstance(last_message, ToolMessage) and last_message.content:
-                response = (
-                    last_message.content
-                    if isinstance(last_message.content, str)
-                    else str(last_message.content)
-                )
-            else:
-                response = "对不起，我没有理解您的问题。"
+        truncated_messages = result["messages"][-2:]
+        print(format_messages_for_print(truncated_messages))
+        
+        response = await _process_llm_response(result)
     except Exception as e:
-        error_message = str(e)
-        print(f"调用 LangGraph 时发生错误: {error_message}")
-        
-        async with sessions_lock:
-            if thread_id in sessions:
-                del sessions[thread_id]
-        
-        # 只处理两种情况：list strip错误和其他所有错误
-        if "'list' object has no attribute 'strip'" in error_message:
-            print("max_tokens设置过小，导致生成的工具参数不完整")
-            response = plugin_config.responses.token_limit_error
-        else:
-            response = plugin_config.responses.general_error
-    # 检查是否有图片或视频链接或音频链接，并发送图片或视频或音频或文本消息
-    image_match = re.search(r'https?://[^\s]+?\.(?:png|jpg|jpeg|gif|bmp|webp)', response, re.IGNORECASE)
-    video_match = re.search(r'https?://[^\s]+?\.(?:mp4|avi|mov|mkv)', response, re.IGNORECASE)
-    audio_match = re.search(r'https?://[^\s]+?\.(?:mp3|wav|ogg|aac|flac)', response, re.IGNORECASE)
-    
-    if image_match:
-        image_url = image_match.group(0)
-        message_content = re.sub(r'!\[.*?\]\((.*?)\)', r'\1', response)
-        message_content = re.sub(r'\[.*?\]\((.*?)\)', r'\1', message_content)
-        message_content = message_content.replace(image_url, "").strip()
-        try:
-            await chat_handler.finish(Message(message_content) + MessageSegment.image(image_url))
-        except ActionFailed:
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(" (图片发送失败)"))
-        except MatcherException:
-            raise
-        except Exception as e :
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(f" (未知错误： {e})"))
-    elif video_match:
-        video_url = video_match.group(0)
-        message_content = re.sub(r'!\[.*?\]\((.*?)\)', r'\1', response)
-        message_content = re.sub(r'\[.*?\]\((.*?)\)', r'\1', message_content)
-        message_content = message_content.replace(video_url, "").strip()
-        try:
-            await chat_handler.finish(Message(message_content) + MessageSegment.video(video_url))
-        except ActionFailed:
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(" (视频发送失败)"))
-        except MatcherException:
-            raise
-        except Exception as e:
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(f" (未知错误： {e})"))
-    elif audio_match:
-        audio_url = audio_match.group(0)
-        message_content = re.sub(r'!\[.*?\]\((.*?)\)', r'\1', response)
-        message_content = re.sub(r'\[.*?\]\((.*?)\)', r'\1', message_content)
-        message_content = message_content.replace(audio_url, "").strip()
-        try:
-            await chat_handler.finish(Message(message_content) + MessageSegment.record(audio_url))
-        except ActionFailed:
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(" (音频发送失败)"))
-        except MatcherException:
-            raise
-        except Exception as e:
-            await chat_handler.finish(Message(message_content) + MessageSegment.text(f" (音频发送失败：{e})"))
-    else:
-        if plugin_config.plugin.chunk.enable:
-            if await send_in_chunks(response):
-                return
-            await chat_handler.finish(Message(response))
-        else:
-            await chat_handler.finish(Message(response))
+        response = await _handle_langgraph_error(e, thread_id)
+    finally:
+        await session.end_processing()
+        # 释放锁
+        session.lock.release()
 
+    # 定义媒体类型的正则和处理函数的映射
+    MEDIA_PATTERNS = {
+        "image": {
+            "pattern": r'(?:https?://|file:///)[^\s]+?\.(?:png|jpg|jpeg|gif|bmp|webp)',
+            "segment_func": MessageSegment.image,
+            "error_msg": "图片"
+        },
+        "video": {
+            "pattern": r'https?://[^\s]+?\.(?:mp4|avi|mov|mkv)',
+            "segment_func": MessageSegment.video,
+            "error_msg": "视频"
+        },
+        "audio": {
+            "pattern": r'https?://[^\s]+?\.(?:mp3|wav|ogg|aac|flac)',
+            "segment_func": MessageSegment.record, 
+            "error_msg": "音频"
+        }
+    }
 
+    async def process_media_message(response: str, media_type: str, url: str) -> Message:
+        """处理包含媒体的消息"""
+        media_info = MEDIA_PATTERNS[media_type]
+        if plugin_config.plugin.media_include_text:
+            # 清理markdown链接语法
+            message_content = re.sub(r'!?\[.*?\]\((.*?)\)', r'\1', response)
+            message_content = message_content.replace(url, "").strip()
+            try:
+                return Message(message_content) + media_info["segment_func"](url)
+            except ActionFailed:
+                return Message(message_content) + MessageSegment.text(f" ({media_info['error_msg']}发送失败)")
+            except MatcherException:
+                raise
+            except Exception as e:
+                return Message(message_content) + MessageSegment.text(f" (未知错误: {e})")
+        else:
+            # 仅发送媒体
+            try:
+                return Message(media_info["segment_func"](url))
+            except ActionFailed:
+                return Message(f"{media_info['error_msg']}发送失败")
+            except MatcherException:
+                raise
+            except Exception as e:
+                return Message(f"未知错误: {e}")
+
+    # 在handle_chat函数中替换原来的媒体处理代码:
+    for media_type, info in MEDIA_PATTERNS.items():
+        if match := re.search(info["pattern"], response, re.IGNORECASE):
+            result = await process_media_message(response, media_type, match.group(0))
+            await chat_handler.finish(result)
+
+    # 处理纯文本消息
+    if plugin_config.plugin.chunk.enable:
+        if await send_in_chunks(response, chat_handler):
+            return
+    await chat_handler.finish(Message(response))
 
 
 
@@ -398,18 +400,34 @@ async def handle_chat_command(args: Message = CommandArg(), event: Event = None)
             'chat chunk <true/false>' 切换分开发送功能"""
             )
     command = command_args[0].lower()
+    if not command_args:
+        await chat_command.finish(
+            """请输入有效的命令：
+            'chat model <模型名字>' 切换模型 
+            'chat clear' 清理会话
+            'chat group <true/false>' 切换群聊会话隔离
+            'chat down' 关闭对话功能
+            'chat up' 开启对话功能
+            'chat chunk <true/false>' 切换分开发送功能"""
+            )
+    command = command_args[0].lower()
     if command == "model":
         # 处理模型切换
         if len(command_args) < 2:
             try:
-                current_model = llm.model_name
-            except AttributeError:
-                current_model = llm.model
-            await chat_command.finish(f"当前模型: {current_model}")
+                current_model = llm.model_name if hasattr(llm, 'model_name') else llm.model
+                await chat_command.finish(f"当前模型: {current_model}")
+            except Exception as e:
+                await chat_command.finish(f"获取当前模型失败: {str(e)}")
+                
         model_name = command_args[1]
         try:
-            llm = get_llm(model_name)
-            graph_builder = build_graph(plugin_config, llm)
+            new_llm = await get_llm(model_name)
+            new_graph_builder = await build_graph(plugin_config, new_llm)
+            # 成功创建新实例后才更新全局变量
+            llm = new_llm
+            graph_builder = new_graph_builder
+            # 清理所有会话
             async with sessions_lock:
                 sessions.clear()
             await chat_command.finish(f"已切换到模型: {model_name}")
@@ -417,7 +435,7 @@ async def handle_chat_command(args: Message = CommandArg(), event: Event = None)
             raise
         except Exception as e:
             await chat_command.finish(f"切换模型失败: {str(e)}")
-            
+    
     elif command == "clear":
         # 处理清理历史会话
         async with sessions_lock:

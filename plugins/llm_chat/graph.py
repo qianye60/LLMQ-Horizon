@@ -9,10 +9,11 @@ from langchain_groq import ChatGroq
 from langchain_core.language_models import LanguageModelInput
 from langchain_google_genai import ChatGoogleGenerativeAI
 from .tools import load_tools
+from functools import wraps
 from .config import Config
+from .config import plugin_config
+import asyncio
 import json
-
-plugin_config = Config.load_config()
 
 groq_models = {
     "llama3-groq-70b-8192-tool-use-preview",
@@ -33,8 +34,8 @@ class MyOpenAI(ChatOpenAI):
             payload["max_tokens"] = payload.pop("max_completion_tokens")
         return payload
 
-def get_llm(model=None):
-    """根据配置获取适当的 LLM 实例"""
+async def get_llm(model=None):
+    """异步获取适当的 LLM 实例"""
     model = model.lower() if model else plugin_config.llm.model
     print(f"使用模型: {model}")
 
@@ -73,7 +74,7 @@ def get_llm(model=None):
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
-def build_graph(config: Config, llm):
+async def build_graph(config: Config, llm):
     """构建并返回对话图"""
     tools = load_tools()
     llm_with_tools = llm.bind_tools(tools)
@@ -88,15 +89,18 @@ def build_graph(config: Config, llm):
         end_on=("human", "tool"),
     )
 
-    def chatbot(state: State):
+    async def chatbot(state: State):
         messages = state["messages"]
         if config.llm.system_prompt:
             messages = [SystemMessage(content=config.llm.system_prompt)] + messages
         trimmed_messages = trimmer.invoke(messages)
-        # print("-" * 50)
-        # print(format_messages_for_print(trimmed_messages))
-        response = llm_with_tools.invoke(trimmed_messages)
-        # print(f"chatbot: {response}")
+        if not trimmed_messages:
+            return {"messages": []}
+        print("-" * 50)
+        truncated_messages = trimmed_messages[-2:]
+        print(format_messages_for_print(truncated_messages))
+        response = await llm_with_tools.ainvoke(trimmed_messages) 
+        print(f"chatbot: {response}")
         return {"messages": [response]}
 
     graph_builder = StateGraph(State)
@@ -109,15 +113,17 @@ def build_graph(config: Config, llm):
 
     return graph_builder
 
+
+
 def format_messages_for_print(messages: List[Union[SystemMessage, HumanMessage, AIMessage, ToolMessage]]) -> str:
     """格式化 LangChain 消息列表"""
     output = []
     for message in messages:
-        if isinstance(message, SystemMessage):
-            output.append(f"SystemMessage: {message.content}\n")
-            output.append("_" * 50 + "\n")
-        elif isinstance(message, HumanMessage):
-            output.append(f"HumanMessage: {message.content}\n")
+        # if isinstance(message, SystemMessage):
+        #     output.append(f"SystemMessage: {message.content}\n")
+        #     output.append("_" * 50 + "\n")
+        if isinstance(message, HumanMessage):
+            output.append("\n" + "_" * 50 + "\nHumanMessage: \n" +  f"{message.content}\n\n")
         elif isinstance(message, AIMessage):
             output.append(f"AIMessage: {message.content}\n")
             if message.tool_calls:
@@ -127,7 +133,7 @@ def format_messages_for_print(messages: List[Union[SystemMessage, HumanMessage, 
                         args = json.loads(tool_call['args'])
                     except (json.JSONDecodeError, TypeError):
                         args = tool_call['args']
-                    output.append(f"  Tool Arguments: {args}\n")
+                    output.append(f"  Tool Arguments: {args}\n\n")
         elif isinstance(message, ToolMessage):
-            output.append(f"ToolMessage: Tool Name: {message.name}  Tool content: {message.content}\n")
+            output.append(f"ToolMessage: \n  Tool Name: {message.name}\n  Tool content: {message.content}\n\n")
     return "".join(output)

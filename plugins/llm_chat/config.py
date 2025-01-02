@@ -30,18 +30,20 @@ class PluginConfig(BaseModel):
     group_chat_isolation: bool = True
     enable_private: bool = True
     enable_group: bool = True
-    max_sessions: int = Field(default=1000, gt=0)
     enable_username: bool = False
     chunk: ChunkConfig = ChunkConfig()
     command_start: str = "?"
     superusers: str = ""
+    media_include_text: bool = True
 
 class ResponseConfig(BaseModel):
     """回复消息配置"""
     empty_message_replies: List[str] = ["你好", "在呢", "我在听"]
     token_limit_error: str = "太长了发不出来，换一个吧"
     general_error: str = "卧槽，报错了，尝试自行修复中，聊聊别的吧！"
-    disabled_message: str = "Bot已禁用"  # 新增此行
+    disabled_message: str = "Bot已禁用"
+    session_busy_message: str = "正在处理其他会话，稍后再试"
+    assistant_empty_reply: str = "API空回复"
 
 class Config(BaseModel):
     llm: LLMConfig
@@ -79,10 +81,10 @@ class Config(BaseModel):
                 group_chat_isolation=toml_config["plugin_settings"]["group_chat_isolation"],
                 enable_private=toml_config["plugin_settings"]["enable_private"],
                 enable_group=toml_config["plugin_settings"]["enable_group"],
-                max_sessions=toml_config["plugin_settings"].get("max_sessions", 1000),
                 enable_username=toml_config["plugin_settings"].get("enable_username", False),
                 command_start=toml_config["plugin_settings"].get("command_start", "?"),
                 superusers=toml_config["plugin_settings"].get("superusers", ""),
+                media_include_text=toml_config["plugin_settings"].get("media_include_text", True),
                 chunk=ChunkConfig(
                     enable=toml_config.get("chunk", {}).get("enable", False),
                     words=toml_config.get("chunk", {}).get("words", ["||"]),
@@ -95,11 +97,14 @@ class Config(BaseModel):
                 empty_message_replies=toml_config["responses"].get("empty_message_replies", ResponseConfig().empty_message_replies),
                 token_limit_error=toml_config["responses"].get("token_limit_error", ResponseConfig().token_limit_error),
                 general_error=toml_config["responses"].get("general_error", ResponseConfig().general_error),
-                disabled_message=toml_config["responses"].get("disabled_message", "Bot已禁用")
+                disabled_message=toml_config["responses"].get("disabled_message", "Bot已禁用"),
+                assistant_empty_reply=toml_config["responses"].get("assistant_empty_reply", "API空回复"),
+                session_busy_message=toml_config["responses"].get("session_busy_message", "正在处理其他会话，稍后再试")
             )
             
             return cls(llm=llm_config, plugin=plugin_config, responses=responses_config)
         except Exception as e:
             raise RuntimeError(f"Failed to load config.toml: {str(e)}")
 
+plugin_config = Config.load_config()
 
