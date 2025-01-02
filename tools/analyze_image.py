@@ -5,11 +5,11 @@ from openai import OpenAI
 from langchain_core.tools import tool
 from .config import config
 
-img_config = config.get("img_analysis", {})
+img_config = config.get("analyze_image", {})
 
 client = OpenAI(
-    api_key=img_config.get("new_api_key"),
-    base_url=img_config.get("new_base_url"),
+    api_key=img_config.get("openai_api_key"),
+    base_url=img_config.get("openai_base_url"),
 )
 
 @tool(parse_docstring=True)

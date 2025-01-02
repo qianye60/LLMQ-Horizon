@@ -5,7 +5,7 @@ from langchain_core.tools import tool
 from .config import config
 import pytz
 
-weather_config = config.get('openweather', {})
+weather_config = config.get('get_weather_data', {})
 os.environ["OPENWEATHER_API_KEY"] = weather_config.get('api_key', '')
 
 @tool(parse_docstring=True)
