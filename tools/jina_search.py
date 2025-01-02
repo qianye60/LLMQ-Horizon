@@ -30,7 +30,7 @@ def jina_search(query: str) -> str:
         truncated_lines = filtered_lines[:top_n]
         result = '\n'.join(truncated_lines)
 
-        return f"tool result: {result}"
+        return result
     except requests.exceptions.Timeout:
         return "搜索超时"
     except requests.exceptions.RequestException:

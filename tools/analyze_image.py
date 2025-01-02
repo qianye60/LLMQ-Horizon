@@ -80,6 +80,6 @@ After understanding the image uploaded by the user and their instructions, pleas
             }
         ],
     )
-    return f"tool result: {completion}"
+    return completion
 
 tools = [analyze_image]

@@ -31,7 +31,7 @@ def jina_reader(url: str) -> str:
         truncated_lines = filtered_lines[:top_n]
         result = '\n'.join(truncated_lines)
 
-        return f"tool result: {result}"
+        return result
     except requests.exceptions.Timeout:
         return "内容过多，返回失败"
     except requests.exceptions.RequestException:

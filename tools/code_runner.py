@@ -342,7 +342,7 @@ def code_runner(source_code: str, language: str, stdin: str = None) -> str:
     base64_stdin = base64_result.get("stdin")
     result = submit_code(base64_source_code, language_id, base64_stdin)
     formatted_result = format_submission_result(result)
-    return f"Tool Response: {formatted_result}"
+    return formatted_result
 
 
 tools = [code_runner]
