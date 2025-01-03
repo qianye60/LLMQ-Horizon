@@ -315,12 +315,12 @@ async def handle_chat(
             "error_msg": "图片"
         },
         "video": {
-            "pattern": r'https?://[^\s]+?\.(?:mp4|avi|mov|mkv)',
+            "pattern": r'(?:https?://|file:///)[^\s]+?\.(?:mp4|avi|mov|mkv)',
             "segment_func": MessageSegment.video,
             "error_msg": "视频"
         },
         "audio": {
-            "pattern": r'https?://[^\s]+?\.(?:mp3|wav|ogg|aac|flac)',
+            "pattern": r'(?:https?://|file:///)[^\s]+?\.(?:mp3|wav|ogg|aac|flac)',
             "segment_func": MessageSegment.record, 
             "error_msg": "音频"
         }
