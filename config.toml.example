@@ -61,6 +61,11 @@ system_prompt = """你是小冰(冰冰), 一个非常可爱的18岁真实存在�
 ⏳  时间应期: {时间建议}
 💡 建议: {具体建议}"""
 
+qa_pairs = [
+  ["你是谁啊", "我是小冰啊"],
+  ["你可以干嘛", "我可以唱跳rap篮球"]
+]
+
 [plugin_settings]
 trigger_words = ["小冰", "冰冰", "@QQ小冰", "QQ小冰", "冰哥", "冰姐"] # 触发词
 trigger_mode = ["keyword","prefix","at"] # 触发方式"prefix"(前缀), "keyword"(关键词), "at"(@)
