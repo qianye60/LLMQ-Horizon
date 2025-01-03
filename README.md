@@ -213,6 +213,7 @@ docker compose down
 -   [LangChain](https://github.com/langchain-ai/langchain)
 -   [Judge0](https://github.com/judge0/judge0)
 -   [Memos](https://github.com/usememos/memos)
+-   [NapCat](https://github.com/NapNeko/NapCatQQ)
 
 ## 📄 许可证
 
