@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field
 from pathlib import Path
 import tomli
@@ -15,6 +15,7 @@ class LLMConfig(BaseModel):
     max_tokens: int = 1000
     system_prompt: Optional[str] = None
     max_context_messages: int = 10
+    qa_pairs: List[Tuple[str, str]] = []
 
 class ChunkConfig(BaseModel):
     """分段发送配置"""
@@ -69,10 +70,12 @@ class Config(BaseModel):
                 base_url=toml_config["llm"]["base_url"],
                 temperature=toml_config["llm"].get("temperature", 0.7),
                 max_tokens=toml_config["llm"].get("max_tokens", 2000),
+                max_context_messages=toml_config["llm"].get("max_context_messages", 10),
                 system_prompt=toml_config["llm"]["system_prompt"],
                 google_api_key=toml_config["llm"].get("google_api_key", ""),
                 top_p=toml_config["llm"].get("top_p", 1.0),
                 groq_api_key=toml_config["llm"].get("groq_api_key", ""),
+                qa_pairs=toml_config["llm"].get("qa_pairs", []),
             )
             
             plugin_config = PluginConfig(

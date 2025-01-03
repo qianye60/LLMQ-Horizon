@@ -91,16 +91,21 @@ async def build_graph(config: Config, llm):
 
     async def chatbot(state: State):
         messages = state["messages"]
-        if config.llm.system_prompt:
-            messages = [SystemMessage(content=config.llm.system_prompt)] + messages
+        # 固定
+        fixed_messages = []
+        if hasattr(config.llm, "system_prompt") and config.llm.system_prompt:
+            fixed_messages.append(SystemMessage(content=config.llm.system_prompt))
+        if hasattr(config.llm, "qa_pairs") and config.llm.qa_pairs:
+            for user_content, assistant_content in config.llm.qa_pairs:
+                fixed_messages.append(HumanMessage(content=user_content))
+                fixed_messages.append(AIMessage(content=assistant_content))
+        # 修剪
         trimmed_messages = trimmer.invoke(messages)
         if not trimmed_messages:
             return {"messages": []}
-        print("-" * 50)
-        truncated_messages = trimmed_messages[-2:]
-        print(format_messages_for_print(truncated_messages))
-        response = await llm_with_tools.ainvoke(trimmed_messages) 
-        print(f"chatbot: {response}")
+        # 合并
+        messages = fixed_messages + trimmed_messages
+        response = await llm_with_tools.ainvoke(messages) 
         return {"messages": [response]}
 
     graph_builder = StateGraph(State)
