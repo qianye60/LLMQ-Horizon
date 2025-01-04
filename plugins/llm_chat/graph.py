@@ -40,6 +40,17 @@ async def get_llm(model=None):
     print(f"使用模型: {model}")
 
     try:
+        if hasattr(plugin_config.llm, 'force_openai') and plugin_config.llm.force_openai:
+            print("强制使用 OpenAI 通道")
+            return MyOpenAI(
+                model=model,
+                temperature=plugin_config.llm.temperature,
+                max_tokens=plugin_config.llm.max_tokens,
+                api_key=plugin_config.llm.api_key,
+                base_url=plugin_config.llm.base_url,
+                top_p=plugin_config.llm.top_p,
+            )
+            
         if model in groq_models:
             print("使用groq")
             return ChatGroq(

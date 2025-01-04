@@ -3,6 +3,7 @@
 # - 带有"gemini"的均走谷歌渠道，其他模型均走openai渠道
 [llm]
 model = "deepseek-chat" # LLM模型名称，自动切换gemini和groq和openai
+force_openai = false  # 设置为 true 时强制所有模型通过 OpenAI 通道, tools不稳定，使用tools请勿开启
 groq_api_key = "gsk_xxxxxxx""  # grop密钥
 google_api_key = "xxxxxxxxxx" # Google API密钥
 api_key = "sk-xxxxxxxx"  # OpenAI API密钥

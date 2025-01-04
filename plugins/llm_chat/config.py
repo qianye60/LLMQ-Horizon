@@ -6,6 +6,7 @@ import tomli
 class LLMConfig(BaseModel):
     """LLM 配置"""
     model: str
+    force_openai: bool = False
     api_key: Optional[str]
     google_api_key: str = ""
     groq_api_key: str = ""
@@ -66,6 +67,7 @@ class Config(BaseModel):
 
             llm_config = LLMConfig(
                 model=toml_config["llm"]["model"],
+                force_openai=toml_config["llm"].get("force_openai", False),
                 api_key=toml_config["llm"]["api_key"],
                 base_url=toml_config["llm"]["base_url"],
                 temperature=toml_config["llm"].get("temperature", 0.7),
