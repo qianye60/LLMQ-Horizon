@@ -4,7 +4,6 @@ import os
 import re
 from langchain_core.tools import tool
 from pathlib import Path
-from rapidfuzz import fuzz
 
 root_path = Path(__file__).resolve().parents[1]
 CACHE_DIR = root_path / "temp_server" / "audio"
@@ -85,13 +84,13 @@ def get_cached_filename(song_url, output_dir="."):
             print(f"获取文件名出错: {e}")
             return None
 
-def find_similar_cache(music_name, similarity_threshold=80):
+def find_similar_cache(music_name, min_match_ratio=0.4):
     """
     根据音乐名称查找相似的缓存文件路径。
 
     Args:
         music_name (str): 音乐名称
-        similarity_threshold (int): 相似度阈值
+        min_match_ratio (float): 最小匹配率 (0-1)
     """
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR, exist_ok=True)
@@ -99,17 +98,40 @@ def find_similar_cache(music_name, similarity_threshold=80):
     cached_files = os.listdir(CACHE_DIR)
     similar_files = []
 
+    # 对搜索关键词进行分词
+    music_name = music_name.lower()
+    keywords = music_name.split()
+    if not keywords:
+        keywords = [music_name]
+
     for filename in cached_files:
         name, ext = os.path.splitext(filename)
-        # 使用 partial_ratio 进行更宽松的匹配
-        similarity = fuzz.partial_ratio(music_name.lower(), name.lower())
-        if similarity >= similarity_threshold:
-            similar_files.append((os.path.join(CACHE_DIR, filename), os.path.getsize(os.path.join(CACHE_DIR, filename))))
+        name = name.lower()
+        
+        # 对文件名进行分词
+        name_parts = name.split()
+        if not name_parts:
+            name_parts = [name]
+
+        # 检查关键词匹配
+        matches = 0
+        for keyword in keywords:
+            for part in name_parts:
+                if keyword in part or part in keyword:
+                    matches += 1
+                    break
+
+        # 计算匹配率
+        match_ratio = matches / max(len(keywords), 1)
+            
+        if match_ratio >= min_match_ratio:
+            file_path = os.path.join(CACHE_DIR, filename)
+            similar_files.append((file_path, os.path.getsize(file_path), match_ratio))
 
     if similar_files:
-        # 找到最大的文件
-        largest_file = max(similar_files, key=lambda x: x[1])[0]
-        return largest_file
+        # 首先按匹配率排序，然后按文件大小排序
+        sorted_files = sorted(similar_files, key=lambda x: (-x[2], -x[1]))
+        return sorted_files[0][0]
     else:
         return None
 
@@ -215,7 +237,7 @@ def download_to_cache(url, music_name):
         return None
 
 
-@tool(parse_docstring=True)
+
 def get_music(music_name: str, provider: str = "hhlq") -> str:
     """Search and acquire music.
 
@@ -246,9 +268,7 @@ def get_music(music_name: str, provider: str = "hhlq") -> str:
         return "Unsupported music API provider"
 
 tools = [get_music]
-# 使用示例
-# filepath = get_music(music_name="洛洛历险记", provider="hhlq")
-# print(filepath)
 
-# filepath = get_music(music_name="告白气球") # 默认使用 hhlq
-# print(filepath)
+# if __name__ == "__main__":
+#     print(get_music(music_name="邓紫棋泡沫"))
+    # print(get_music(music_name="泡沫", provider="hhlq"))
