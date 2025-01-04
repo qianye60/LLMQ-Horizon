@@ -78,7 +78,7 @@ superusers = "123456789"  # 超级用户的qq
 
 # 消息分段，需要让LLM增加分段关键词，根据关键词分段发送
 [chunk]
-enable = fasle
+enable = false
 words = ["||"] # 分段关键词，需要在系统提示词中让LLM需要分段发送时候加入这个关键词
 max_time = 10.0 # 一段话和一段话之间的最大延迟
 char_per_s = 5 # 每秒几个字符，模拟真人打字
