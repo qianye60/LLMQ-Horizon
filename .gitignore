@@ -8,6 +8,7 @@ wheels/
 languages_cache.json
 temp_server/
 test.py
+trans_readme.py
 
 # Virtual environments
 .venv
