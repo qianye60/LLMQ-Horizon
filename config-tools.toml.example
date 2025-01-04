@@ -39,6 +39,12 @@ openai_api_key = "sk-xxxxx"  # 在此填入openai格式的密钥
 openai_base_url = "https://xxx.xx.xx/v1"  # 模型请求地址
 model = "llama-3.3-70b-instruct"  # 推算用的模型
 
+
+# "rfv3": "fal",
+# "cv3p": "glm",
+# "sdxlx1": "cloudflare",
+# "sd35": "siliconflow",
+# "flux1s": "siliconflow"
 [create_art]
 fal_key = ""  # 在此填入FAL服务的API密钥
 glm_key = "" # 填入glm密钥

@@ -9,6 +9,7 @@ from .prompt.prompt import prompt_all
 from langchain_core.tools import tool
 from abc import ABC, abstractmethod
 from enum import Enum
+import time
 import os
 
 root_path = Path(__file__).resolve().parents[1]
@@ -23,6 +24,7 @@ cloudflare_account_id = create_art_config.get("cloudflare_account_id")
 cloudflare_api_token = create_art_config.get("cloudflare_api_token")
 openai_base_url = create_art_config.get("openai_base_url")
 openai_model = create_art_config.get("model")
+siliconflow_key = create_art_config.get("siliconflow_key")
 
 # 配置需要环境变量的提供商
 os.environ.update({
@@ -303,19 +305,154 @@ class CloudflareProvider(ModelProvider):
             print(error_msg)
             return error_msg
 
+class SiliconFlowProvider(ModelProvider):
+    """SiliconFlow AI 模型提供商"""
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+    
+    def get_model_names(self) -> list:
+        return ["sd35", "flux1s"]
+    
+    def generate_image(self, model_name: str, prompt: str, image_size: ImageSize = ImageSize.SQUARE, style: str = "any") -> str:
+        optimized_prompt = _optimize_prompt(prompt)
+        if model_name == "sd35":
+            return self._generate_sd35(optimized_prompt, image_size)
+        elif model_name == "flux1s":
+            return self._generate_flux(optimized_prompt, image_size)
+        return "不支持的SiliconFlow模型"
+    
+    def _generate_sd35(self, optimized_prompt: str, image_size: ImageSize = ImageSize.SQUARE) -> str:
+        """SD 3.5 模型实现"""
+        url = "https://api.siliconflow.cn/v1/images/generations"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # 转换图片尺寸格式
+        size_mapping = {
+            ImageSize.SQUARE: "1024x1024",
+            ImageSize.PORTRAIT: "576x1024",
+            ImageSize.LANDSCAPE: "1024x576"
+        }
+        image_size_str = size_mapping.get(image_size, "1024x1024")
+        
+        data = {
+            "model": "stabilityai/stable-diffusion-3-5-large",
+            "prompt": optimized_prompt,
+            "image_size": image_size_str,
+            "batch_size": 1
+        }
+            
+        try:
+            print(f"SiliconFlow请求参数: {data}")
+            retry_count = 0
+            max_retries = 2
+            backoff_factor = 2
+            
+            while retry_count < max_retries:
+                try:
+                    resp = requests.post(url, headers=headers, json=data, timeout=30)
+                    resp.raise_for_status()
+                    result = resp.json()
+                    
+                    if 'images' in result and result['images']:
+                        url = result['images'][0].get('url')
+                        if url:
+                            _save_image(url)
+                            return url
+                    return f"生成图片失败: {result}"
+                    
+                except requests.exceptions.RequestException as e:
+                    print(f"Error during API call (attempt {retry_count + 1}): {e}")
+                    if resp.status_code != 503:
+                        return f"SiliconFlow请求错误: {str(e)}"
+                    retry_count += 1
+                    delay = backoff_factor ** retry_count
+                    print(f"Retrying in {delay} seconds...")
+                    time.sleep(delay)
+            
+            return "Maximum retries reached"
+                
+        except Exception as e:
+            error_msg = f"SiliconFlow其他错误: {str(e)}"
+            print(error_msg)
+            return error_msg
+
+    def _generate_flux(self, optimized_prompt: str, image_size: ImageSize = ImageSize.SQUARE) -> str:
+        """FLUX.1-schnell 模型实现"""
+        url = "https://api.siliconflow.cn/v1/images/generations"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # 转换图片尺寸格式
+        size_mapping = {
+            ImageSize.SQUARE: "1024x1024",
+            ImageSize.PORTRAIT: "576x1024",
+            ImageSize.LANDSCAPE: "1024x576"
+        }
+        image_size_str = size_mapping.get(image_size, "1024x1024")
+        
+        data = {
+            "model": "black-forest-labs/FLUX.1-schnell",
+            "prompt": optimized_prompt,
+            "image_size": image_size_str,
+            "prompt_enhancement": False
+        }
+            
+        try:
+            print(f"FLUX请求参数: {data}")
+            retry_count = 0
+            max_retries = 2
+            backoff_factor = 2
+            
+            while retry_count < max_retries:
+                try:
+                    resp = requests.post(url, headers=headers, json=data, timeout=30)
+                    resp.raise_for_status()
+                    result = resp.json()
+                    
+                    if 'images' in result and result['images']:
+                        url = result['images'][0].get('url')
+                        if url:
+                            _save_image(url)
+                            return url
+                    return f"生成图片失败: {result}"
+                    
+                except requests.exceptions.RequestException as e:
+                    print(f"Error during API call (attempt {retry_count + 1}): {e}")
+                    if resp.status_code != 503:
+                        return f"FLUX请求错误: {str(e)}"
+                    retry_count += 1
+                    delay = backoff_factor ** retry_count
+                    print(f"Retrying in {delay} seconds...")
+                    time.sleep(delay)
+            
+            return "Maximum retries reached"
+                
+        except Exception as e:
+            error_msg = f"FLUX其他错误: {str(e)}"
+            print(error_msg)
+            return error_msg
+
 class ProviderFactory:
     """模型提供商工厂类"""
     # 初始化时注入统一管理的密钥
     _providers = {
         "fal": FalProvider(fal_key),
         "glm": GlmProvider(glm_key),
-        "cloudflare": CloudflareProvider(cloudflare_account_id, cloudflare_api_token)
+        "cloudflare": CloudflareProvider(cloudflare_account_id, cloudflare_api_token),
+        "siliconflow": SiliconFlowProvider(siliconflow_key)
     }
     
     _model_to_provider = {
         "rfv3": "fal",
         "cv3p": "glm",
-        "sdxlx1": "cloudflare"
+        "sdxlx1": "cloudflare",
+        "sd35": "siliconflow",
+        "flux1s": "siliconflow"
     }
     
     @classmethod
@@ -331,7 +468,7 @@ def create_art(prompt: str, image_size: str = "square", style: str = "any", mode
         prompt: Description of the content to be drawn.
         image_size: Image size. Available values: "square", "portrait", "landscape"
         style: Image style for rfv3. Available values: "any", "realistic_image", "digital_illustration"
-        model: Model name. Available values:  "sdxlx1", "cv3p","rfv3"
+        model: Model name. Available values: "sdxlx1", "cv3p", "rfv3", "sd35", "flux1s"
     """
     try:
         size_enum = ImageSize(image_size)
