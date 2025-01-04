@@ -70,7 +70,7 @@ class ImageSizeConverter:
         return size_mapping.get(size, {"width": 1024, "height": 1024})
 
 def _optimize_prompt(prompt: str) -> str:
-    """使用 AI 优化绘图提示词"""
+    """优化绘图提示词"""
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {create_art_config.get('openai_api_key')}"

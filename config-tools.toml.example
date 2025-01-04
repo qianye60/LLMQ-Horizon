@@ -54,6 +54,12 @@ openai_api_key = ""  # 在此填入OpenAI格式的API密钥
 openai_base_url = ""  # OpenAI服务的基础URL
 model = "gemini-1.5-pro-latest"  # 中间层提示词优化模型
 
+[create_video]
+siliconflow_key = ""
+openai_api_key = ""
+openai_base_url = ""
+openai_model = "gemini-1.5-pro-latest"
+
 [code_runner]
 judge0_url = ""  # Judge0服务的URL
 judge0_api_key = ""  # 在此填入Judge0 API密钥
