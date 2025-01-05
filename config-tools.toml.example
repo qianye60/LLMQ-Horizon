@@ -54,11 +54,26 @@ openai_api_key = ""  # 在此填入OpenAI格式的API密钥
 openai_base_url = ""  # OpenAI服务的基础URL
 model = "gemini-1.5-pro-latest"  # 中间层提示词优化模型
 
+
+
 [create_video]
 siliconflow_key = ""
 openai_api_key = ""
 openai_base_url = ""
 openai_model = "gemini-1.5-pro-latest"
+
+
+# 需要自行去siliconflow传入预置语音然后获取语音uri填入下方映射然后通过提示词把可选音色传递给LLM
+[create_speech]
+siliconflow_key = "sk-virxydpbiwxhnmcwyxcdnxytlzqjdhnfzghgeuostboelsyp"
+max_text_length = 5
+
+[create_speech.voice_mapping]
+shenzi = "speech:shenzi:clx5c9xxxxxxxxxxxxlzwmgyydshuungzcgwdh"
+keli = "speech:keli:clx5c97exxxxxxxxxxxv"
+xigewen = "speech:xigewen:clx5c97xxxxxxxxxxxxxxxxxx"
+
+
 
 [code_runner]
 judge0_url = ""  # Judge0服务的URL
