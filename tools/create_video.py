@@ -19,9 +19,6 @@ siliconflow_key = create_video_config.get("siliconflow_key")
 openai_base_url = create_video_config.get("openai_base_url")
 openai_api_key = create_video_config.get("openai_api_key")
 openai_model = create_video_config.get("model")
-print(openai_model)
-print(openai_api_key)
-
 def _optimize_prompt(prompt: str) -> str:
     """优化视频提示词"""
     headers = {

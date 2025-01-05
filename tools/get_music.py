@@ -59,9 +59,22 @@ def search_netease_music(
         print(f"发生未知错误: {e}")
         return None
 
+def normalize_filename(filename: str) -> str:
+    """
+    规范化文件名：
+    - 移除特殊字符
+    - 将空格替换为下划线
+    - 仅保留字母、数字、下划线和中文字符
+    """
+    # 保留字母、数字、下划线和中文字符，其他替换为空格
+    normalized = re.sub(r'[^\w\u4e00-\u9fff]', ' ', filename)
+    # 将连续空格替换为单个下划线
+    normalized = re.sub(r'\s+', '_', normalized.strip())
+    return normalized
+
 def get_cached_filename(song_url, output_dir="."):
     """
-    根据歌曲URL和缓存目录生成缓存文件名。
+    根据歌曲URL和缓存目录生成规范化的缓存文件名。
 
     Args:
         song_url: 歌曲的URL
@@ -79,8 +92,14 @@ def get_cached_filename(song_url, output_dir="."):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
             info_dict = ydl.extract_info(song_url, download=False)
-            filename = ydl.prepare_filename(info_dict)
-            return filename
+            original_filename = ydl.prepare_filename(info_dict)
+            
+            # 规范化文件名部分
+            base_name = os.path.splitext(os.path.basename(original_filename))[0]
+            ext = os.path.splitext(original_filename)[1]
+            normalized_name = normalize_filename(base_name)
+            
+            return os.path.join(os.path.dirname(original_filename), f"{normalized_name}{ext}")
         except yt_dlp.DownloadError as e:
             print(f"获取文件名出错: {e}")
             return None
@@ -214,7 +233,7 @@ def _get_hhlq_music(music_name) -> str:
     
 def download_to_cache(url, music_name):
     """
-    通过普通请求下载文件到缓存目录并以歌曲名命名。
+    通过普通请求下载文件到缓存目录并以规范化的歌曲名命名。
 
     Args:
         url (str): 文件 URL
@@ -226,9 +245,15 @@ def download_to_cache(url, music_name):
         response = requests.get(url, stream=True)
         response.raise_for_status()
 
-        # 使用 music_name 和原来的扩展名
+        # 规范化音乐名称
+        normalized_name = normalize_filename(music_name)
+        
+        # 获取原始文件扩展名
         original_filename = url.split("/")[-1]
-        filename = os.path.join(CACHE_DIR, f"{music_name}{os.path.splitext(original_filename)[1]}")
+        ext = os.path.splitext(original_filename)[1]
+        
+        # 组合最终的文件名
+        filename = os.path.join(CACHE_DIR, f"{normalized_name}{ext}")
         
         with open(filename, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
