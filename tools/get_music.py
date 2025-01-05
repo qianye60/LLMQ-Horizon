@@ -4,6 +4,7 @@ import os
 import re
 from langchain_core.tools import tool
 from pathlib import Path
+from difflib import SequenceMatcher
 
 root_path = Path(__file__).resolve().parents[1]
 CACHE_DIR = root_path / "temp_server" / "audio"
@@ -117,7 +118,8 @@ def find_similar_cache(music_name, min_match_ratio=0.4):
         matches = 0
         for keyword in keywords:
             for part in name_parts:
-                if keyword in part or part in keyword:
+                ratio = SequenceMatcher(None, part, keyword).ratio()
+                if ratio >= 0.8:
                     matches += 1
                     break
 
