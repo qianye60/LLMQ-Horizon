@@ -36,7 +36,7 @@ r"""         तारका तिमिरं दीपो मायावश�
           | | :  `- \`. ;`. _/; .'/ /  .' ; |
           \  \ `-.   \_\_`. _.'_/_/  -' _.' /
 ===========`-.`___`-.__\ \___  /__.-'_.'_.-'================
-                        `=--=-'                    不会画梅花，画个佛祖保佑"""
+                        `=--=-'    不会画梅花，画个佛祖保佑"""
                         
 class MyOpenAI(ChatOpenAI):
     @property
@@ -91,87 +91,93 @@ def getInteractingGua(originalGuaUpper: str, originalGuaLower: str):
     upper = lines[2:5]
     return BINARY_TRIGRAM.get(tuple(upper)), BINARY_TRIGRAM.get(tuple(lower))
 
+def _time_based_divination(year_di_zhi_index: int = 0,
+                          lm: int = 0,
+                          ld: int = 0,
+                          lh: int = 0) -> dict:
+    """时间法起卦"""
+    total_upper = year_di_zhi_index + lm + ld
+    upper_num = total_upper % 8 or 8
+    total_lower = year_di_zhi_index + lm + ld + lh
+    lower_num = total_lower % 8 or 8
+    moving_yao = total_lower % 6 or 6
+    
+    up = getTrigramByNumber(upper_num)
+    low = getTrigramByNumber(lower_num)
+    
+    return _process_divination_result(up, low, moving_yao)
+
+def _number_based_divination(n1: int = 0,
+                           n2: int = 0,
+                           n3: int = 0) -> dict:
+    """数字法起卦"""
+    upper_num = (n1 + n2) % 8 or 8
+    lower_num = (n1 + n2 + n3) % 8 or 8
+    moving_yao = (n1 + n2 + n3) % 6 or 6
+    
+    up = getTrigramByNumber(upper_num)
+    low = getTrigramByNumber(lower_num)
+    
+    return _process_divination_result(up, low, moving_yao)
+
+def _random_based_divination() -> dict:
+    """随机法起卦"""
+    random_index_up = get_random_numbers(divination_config.get("random_api_key"), 1, 0, 7) or [0]
+    random_index_low = get_random_numbers(divination_config.get("random_api_key"), 1, 0, 7) or [0]
+    up = EIGHT_TRIGRAMS[random_index_up[0]]
+    low = EIGHT_TRIGRAMS[random_index_low[0]]
+    
+    random_index_yao = get_random_numbers(divination_config.get("random_api_key"), 1, 1, 6) or [1]
+    moving_yao = random_index_yao[0]
+    
+    result = _process_divination_result(up, low, moving_yao)
+    result.update({
+        "random_up": random_index_up[0],
+        "random_yao": random_index_yao[0]
+    })
+    return result
+
+def _process_divination_result(up: str, low: str, moving_yao: int) -> dict:
+    """处理卦象结果"""
+    iUp, iLow = getInteractingGua(up, low)
+    original_hex = TRIGRAM_BINARY[low] + TRIGRAM_BINARY[up]
+    mutated_hex = list(original_hex)
+    mutated_hex[moving_yao - 1] = 1 - mutated_hex[moving_yao - 1]
+    bian_low = BINARY_TRIGRAM.get(tuple(mutated_hex[:3]))
+    bian_up = BINARY_TRIGRAM.get(tuple(mutated_hex[3:]))
+    
+    return {
+        "本卦": (up, low),
+        "互卦": (iUp, iLow),
+        "变卦": (bian_up, bian_low),
+        "动爻": moving_yao
+    }
+
 def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None, hour_12=None,
                   num1=None, num2=None, num3=None):
-    def _meihuaYiShu(methodType: int,
-                     year_di_zhi_index: int = 0,
-                     lm: int = 0,
-                     ld: int = 0,
-                     lh: int = 0,
-                     n1: int = 0,
-                     n2: int = 0,
-                     n3: int = 0):
-        if methodType == 1:
-            total_upper = year_di_zhi_index + lm + ld
-            upper_num = total_upper % 8
-            upper_num = 8 if upper_num == 0 else upper_num
-            total_lower = year_di_zhi_index + lm + ld + lh
-            lower_num = total_lower % 8
-            lower_num = 8 if lower_num == 0 else lower_num
-            moving_yao = total_lower % 6
-            moving_yao = 6 if moving_yao == 0 else moving_yao
-            up = getTrigramByNumber(upper_num)
-            low = getTrigramByNumber(lower_num)
-        elif methodType == 2:
-            upper_num = (n1 + n2) % 8
-            upper_num = 8 if upper_num == 0 else upper_num
-            lower_num = (n1 + n2 + n3) % 8
-            lower_num = 8 if lower_num == 0 else lower_num
-            moving_yao = (n1 + n2 + n3) % 6
-            moving_yao = 6 if moving_yao == 0 else moving_yao
-            up = getTrigramByNumber(upper_num)
-            low = getTrigramByNumber(lower_num)
-        else:
-            random_index_up = get_random_numbers(divination_config.get("random_api_key"), 1, 0, 7)
-            print(random_index_up)
-            if not random_index_up:
-                random_index_up = [0]
-            up = EIGHT_TRIGRAMS[random_index_up[0]]
-
-            low = EIGHT_TRIGRAMS[(EIGHT_TRIGRAMS.index(up) + 1) % 8]
-
-            random_index_yao = get_random_numbers(divination_config.get("random_api_key"), 1, 1, 6)
-            print(random_index_yao)
-            if not random_index_yao:
-                random_index_yao = [1]
-            moving_yao = random_index_yao[0]
-
-        iUp, iLow = getInteractingGua(up, low)
-        original_hex = TRIGRAM_BINARY[low] + TRIGRAM_BINARY[up]
-        mutated_hex = list(original_hex)
-        mutated_hex[moving_yao - 1] = 1 - mutated_hex[moving_yao - 1]
-        bian_low = BINARY_TRIGRAM.get(tuple(mutated_hex[:3]))
-        bian_up = BINARY_TRIGRAM.get(tuple(mutated_hex[3:]))
-        return {
-            "本卦": (up, low),
-            "互卦": (iUp, iLow),
-            "变卦": (bian_up, bian_low),
-            "动爻": moving_yao,
-            "random_up": random_index_up[0],
-            "random_yao": random_index_yao[0]
-        }
-
+    """梅花易数主函数"""
     if method_type == 1:
         index_ = (lunar_year % 12) if lunar_year else 0
-        result = _meihuaYiShu(1, index_, lunar_month or 0, lunar_day or 0, hour_12 or 0)
+        result = _time_based_divination(index_, lunar_month or 0, lunar_day or 0, hour_12 or 0)
     elif method_type == 2:
-        result = _meihuaYiShu(2, 0, 0, 0, 0, num1 or 0, num2 or 0, num3 or 0)
+        result = _number_based_divination(num1 or 0, num2 or 0, num3 or 0)
     else:
-        result = _meihuaYiShu(3)
+        result = _random_based_divination()
 
     up, low = result["本卦"]
     iup, ilow = result["互卦"]
     bup, blow = result["变卦"]
     yao = result["动爻"]
 
-    gua_ben_index = 0
-    ben_gua_name = up + low
-    gua_bian_index = 0
-    bian_gua_name = (bup or "") + (blow or "")
-    gua_hu_index = 0
-    hu_gua_name = (iup or "") + (ilow or "")
-    moving_yao = yao
-    return (gua_ben_index, ben_gua_name, gua_bian_index, bian_gua_name, gua_hu_index, hu_gua_name, moving_yao, result.get("random_up"), result.get("random_yao"))
+    return (0,                              # gua_ben_index
+            up + low,                       # ben_gua_name
+            0,                              # gua_bian_index
+            (bup or "") + (blow or ""),     # bian_gua_name
+            0,                              # gua_hu_index
+            (iup or "") + (ilow or ""),     # hu_gua_name
+            yao,                            # moving_yao
+            result.get("random_up"),        # random_up (None if not random method)
+            result.get("random_yao"))       # random_yao (None if not random method)
 
 def _get_current_time_info(dt: Optional[datetime.datetime] = None):
 
@@ -240,17 +246,19 @@ def divination(query: str,
         lunar_day = lunar_info.getLunarDay()
         hour_12 = china_time.hour % 12
         hour_12 = 12 if hour_12 == 0 else hour_12
-        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(
-            1, lunar_year=lunar_year, lunar_month=lunar_month, lunar_day=lunar_day, hour_12=hour_12
-        )
+        result = meihua_yi_shu(1, lunar_year=lunar_year, lunar_month=lunar_month, 
+                              lunar_day=lunar_day, hour_12=hour_12)
     elif method == 2:
-        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(
-            2, num1=num1, num2=num2, num3=num3
-        )
+        result = meihua_yi_shu(2, num1=num1, num2=num2, num3=num3)
     else:
-        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao, random_up, random_yao = meihua_yi_shu(3)
+        result = meihua_yi_shu(3)
 
+    gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao, random_up, random_yao = result
     lunar_time, gregorian_time, sizhu_cn = _get_current_time_info(china_time)
+
+    random_info = "无"
+    if method == 3 and random_up is not None and random_yao is not None:
+        random_info = f"up={random_up}, yao={random_yao}"
 
     system_prompt = f"""## 角色设定
 你是一位精通梅花易数的资深算卦先生，拥有数十年周易研究经验。
@@ -264,7 +272,7 @@ def divination(query: str,
 - 变卦：{bian_gua_name}
 - 互卦：{hu_gua_name}
 - 动爻：第{dong_yao}爻
-- 随机数: {"up=" + str(random_up) + ", yao=" + str(random_yao) if method == 3 else "无"}
+- 随机数: {random_info}
 
 ## 梅花易数分析流程
 ### 1. 分析卦象（多维度解读）
@@ -333,7 +341,7 @@ def divination(query: str,
 
 ## 输出格式参考
 ```json
-详细给出推理流程，并按下面格式输出结果
+详细给出推理流程，并按下面格式输出结
   "提问": "关于事业发展的一个预测",
   "起卦方式": "时间法",
   "日期": "农历九月初九",
