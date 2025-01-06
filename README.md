@@ -175,6 +175,8 @@ docker compose down
 
 ## ❗ 常见问题
 
+所有tools均通过测试，如有问题请参考下面检查。
+
 <details>
 <summary>1. 登录失败</summary>
 
