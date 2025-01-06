@@ -158,6 +158,7 @@ async def build_message_content(
     media_urls: Dict[str, Dict[str, List[str]]],
     event: MessageEvent,
     user_name: str,
+    message_id: str,
 ) -> str:
     """构建最终发送给大模型的消息内容"""
     
@@ -180,7 +181,7 @@ async def build_message_content(
 
     if user_name:
         current_time = get_utc8_time()
-        message_content = f"Time_now(UTC+8): {current_time}\nuser_name: {user_name}\nuser_message: {full_content}"
+        message_content = f"Time_now(UTC+8): {current_time}\n{message_id}\nuser_name: {user_name}\nuser_message: {full_content}"
     else:
         message_content = full_content
 

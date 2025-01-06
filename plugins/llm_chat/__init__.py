@@ -253,11 +253,6 @@ async def handle_chat(
     # 提取媒体链接
     media_urls = await extract_media_urls(message, event.reply.message if event.reply else None)
 
-    # 构建消息内容
-    message_content = await build_message_content(message, media_urls, event, user_name)
-    
-    # ----------------- 对话消息体构建END -----------------
-
     # 构建会话ID，创建或获取Session对象
     if isinstance(event, GroupMessageEvent):
         if plugin_config.plugin.group_chat_isolation:
@@ -267,6 +262,16 @@ async def handle_chat(
     else:
         thread_id = f"private_{event.user_id}"
     print(f"Current thread: {thread_id}")
+
+    # 构建消息ID，传递给LangGraph
+    if isinstance(event, GroupMessageEvent):
+        message_id = f"Group_ID: {event.group_id}\nUSER_ID: {event.user_id}"
+    else:
+        message_id = f"USER_ID: {event.user_id}"
+
+    # 构建消息内容
+    message_content = await build_message_content(message, media_urls, event, user_name, message_id)
+
     session = await get_or_create_session(thread_id)
 
 
