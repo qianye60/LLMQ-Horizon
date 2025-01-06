@@ -264,7 +264,7 @@ def download_to_cache(url, music_name):
         return None
 
 
-
+@tool(parse_docstring=True)
 def get_music(music_name: str, provider: str = "hhlq") -> str:
     """Search and acquire music.
 

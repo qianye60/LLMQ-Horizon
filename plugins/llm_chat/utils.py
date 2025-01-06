@@ -96,7 +96,7 @@ async def remove_trigger_words(message: Message, event: MessageEvent) -> str:
             except Exception as e:
                 print(f"获取被@用户信息失败: {e}")
                 at_name = str(seg.data["qq"])
-            text += f"@{at_name}"
+            text += f"@{at_name}(user_id: {seg.data['qq']})"
             
     text = text.strip()
     
@@ -125,7 +125,7 @@ async def send_in_chunks(response: str, chat_handler) -> bool:
     分段发送逻辑, 返回True表示已完成发送, 否则False
     """
     for sep in plugin_config.plugin.chunk.words:
-        if sep in response:
+        if (sep in response):
             chunks = response.split(sep)
             for i, chunk in enumerate(chunks):
                 chunk = chunk.strip()
