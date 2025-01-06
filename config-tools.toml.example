@@ -38,7 +38,7 @@ min_length = 10  # 最小文本长度要求
 openai_api_key = "sk-xxxxx"  # 在此填入openai格式的密钥
 openai_base_url = "https://xxx.xx.xx/v1"  # 模型请求地址
 model = "llama-3.3-70b-instruct"  # 推算用的模型
-
+random_api_key = "xxxxx" # 在https://api.random.org/dashboard/details获取
 
 # "rfv3": "fal",
 # "cv3p": "glm",

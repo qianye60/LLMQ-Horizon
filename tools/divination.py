@@ -4,6 +4,7 @@ from langchain_core.language_models import LanguageModelInput
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from .config import config
+from .utils.real_random import get_random_numbers
 import datetime
 import pytz
 import sxtwl
@@ -92,9 +93,6 @@ def getInteractingGua(originalGuaUpper: str, originalGuaLower: str):
 
 def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None, hour_12=None,
                   num1=None, num2=None, num3=None):
-    # 用新的 meihuaYiShu 逻辑，但兼容旧代码的参数传递与返回形态
-    import random
-
     def _meihuaYiShu(methodType: int,
                      year_di_zhi_index: int = 0,
                      lm: int = 0,
@@ -103,7 +101,6 @@ def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None
                      n1: int = 0,
                      n2: int = 0,
                      n3: int = 0):
-        # 核心新逻辑
         if methodType == 1:
             total_upper = year_di_zhi_index + lm + ld
             upper_num = total_upper % 8
@@ -125,10 +122,19 @@ def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None
             up = getTrigramByNumber(upper_num)
             low = getTrigramByNumber(lower_num)
         else:
-            # 保留原来随机功能
-            up = random.choice(EIGHT_TRIGRAMS)
+            random_index_up = get_random_numbers(divination_config.get("random_api_key"), 1, 0, 7)
+            print(random_index_up)
+            if not random_index_up:
+                random_index_up = [0]
+            up = EIGHT_TRIGRAMS[random_index_up[0]]
+
             low = EIGHT_TRIGRAMS[(EIGHT_TRIGRAMS.index(up) + 1) % 8]
-            moving_yao = random.randint(1, 6)
+
+            random_index_yao = get_random_numbers(divination_config.get("random_api_key"), 1, 1, 6)
+            print(random_index_yao)
+            if not random_index_yao:
+                random_index_yao = [1]
+            moving_yao = random_index_yao[0]
 
         iUp, iLow = getInteractingGua(up, low)
         original_hex = TRIGRAM_BINARY[low] + TRIGRAM_BINARY[up]
@@ -140,11 +146,12 @@ def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None
             "本卦": (up, low),
             "互卦": (iUp, iLow),
             "变卦": (bian_up, bian_low),
-            "动爻": moving_yao
+            "动爻": moving_yao,
+            "random_up": random_index_up[0],
+            "random_yao": random_index_yao[0]
         }
 
     if method_type == 1:
-        # 以农历数字的简单方式当地支序号，这里用 (lunar_year % 12) 简化模拟
         index_ = (lunar_year % 12) if lunar_year else 0
         result = _meihuaYiShu(1, index_, lunar_month or 0, lunar_day or 0, hour_12 or 0)
     elif method_type == 2:
@@ -156,7 +163,7 @@ def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None
     iup, ilow = result["互卦"]
     bup, blow = result["变卦"]
     yao = result["动爻"]
-    # 尽量保持旧返回值结构
+
     gua_ben_index = 0
     ben_gua_name = up + low
     gua_bian_index = 0
@@ -164,10 +171,10 @@ def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None
     gua_hu_index = 0
     hu_gua_name = (iup or "") + (ilow or "")
     moving_yao = yao
-    return (gua_ben_index, ben_gua_name, gua_bian_index, bian_gua_name, gua_hu_index, hu_gua_name, moving_yao)
+    return (gua_ben_index, ben_gua_name, gua_bian_index, bian_gua_name, gua_hu_index, hu_gua_name, moving_yao, result.get("random_up"), result.get("random_yao"))
 
 def _get_current_time_info(dt: Optional[datetime.datetime] = None):
-    # 用新的 getCurrentTimeInfo 逻辑，但仅返回旧代码需要的 3 个值
+
     import pytz, datetime
     import sxtwl
     if dt is None:
@@ -241,15 +248,15 @@ def divination(query: str,
             2, num1=num1, num2=num2, num3=num3
         )
     else:
-        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(3)
+        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao, random_up, random_yao = meihua_yi_shu(3)
 
     lunar_time, gregorian_time, sizhu_cn = _get_current_time_info(china_time)
 
     system_prompt = f"""## 角色设定
 你是一位精通梅花易数的资深算卦先生，拥有数十年周易研究经验。
-你将参考下面梅花易数分析流程，严谨、专业、细致地为咨询者进行周易预测，并严格遵循参考格式输出
-按照下面信息起卦，下面信息是以及计算好的不管是明天还是今天
-时间和四柱等信息：
+你将参考下面梅花易数分析流程，严谨、专业、细致地为咨询者进行周易预测，并严格遵循参考格式输出，注意先给出详细分析，一步步推算
+按照下面信息起卦，下面信息是以及计算好的不管是明天还是今天，如果是随机数取卦则无视时间：
+- 起卦方式：{"时间法" if method == 1 else "数字法" if method == 2 else "随机法"}
 - 公历时间：{gregorian_time}
 - 农历时间：{lunar_time}
 - 四柱：{sizhu_cn}
@@ -257,6 +264,7 @@ def divination(query: str,
 - 变卦：{bian_gua_name}
 - 互卦：{hu_gua_name}
 - 动爻：第{dong_yao}爻
+- 随机数: {"up=" + str(random_up) + ", yao=" + str(random_yao) if method == 3 else "无"}
 
 ## 梅花易数分析流程
 ### 1. 分析卦象（多维度解读）
