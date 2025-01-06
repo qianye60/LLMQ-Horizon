@@ -11,7 +11,10 @@ import sxtwl
 
 divination_config = config.get("divination", {})
 
-
+"""
+作者：木花开耶姬
+梅花易数的三种起卦方式，结果为列表表示，0为阴，1为阳
+"""
 r"""         तारका तिमिरं दीपो मायावश्याय बुद्बुदम्।
             स्वप्नं च विद्युदभ्रं च एवं द्रष्टव्य संस्कृतम्॥
             तथा प्रकाशयेत्, तेनोच्यते संप्रकाशयेदिति॥
@@ -32,7 +35,8 @@ r"""         तारका तिमिरं दीपो मायावश�
           | | :  `- \`. ;`. _/; .'/ /  .' ; |
           \  \ `-.   \_\_`. _.'_/_/  -' _.' /
 ===========`-.`___`-.__\ \___  /__.-'_.'_.-'================
-                        `=--=-'                    """
+                        `=--=-'                    不会画梅花，画个佛祖保佑"""
+                        
 class MyOpenAI(ChatOpenAI):
     @property
     def _default_params(self) -> Dict[str, Any]:
@@ -63,188 +67,199 @@ llm = MyOpenAI(
     top_p = 1,
 )
 
-Gan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-Zhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-ymc = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
-rmc = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
-       "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
-       "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十", "卅一"]
-
-# 先天八卦顺序和数字
-BaGua = ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
-BaGua_num = {
-    "乾": 1, "兑": 2, "离": 3, "震": 4,
-    "巽": 5, "坎": 6, "艮": 7, "坤": 8
+HEAVENLY_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+EARTHLY_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+LUNAR_MONTHS_CN = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
+LUNAR_DAYS_CN = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+                 "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+                 "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十", "卅一"]
+EIGHT_TRIGRAMS = ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
+EIGHT_TRIGRAMS_NUM = {"乾": 1, "兑": 2, "离": 3, "震": 4, "巽": 5, "坎": 6, "艮": 7, "坤": 8}
+TRIGRAM_BINARY = {
+    "坤": [0, 0, 0], "震": [1, 0, 0], "坎": [0, 1, 0], "兑": [1, 1, 0],
+    "艮": [0, 0, 1], "巽": [1, 0, 1], "离": [0, 1, 1], "乾": [1, 1, 1]
 }
+BINARY_TRIGRAM = {tuple(v): k for k, v in TRIGRAM_BINARY.items()}
 
-def _calculate_gua_numbers(year, month, day, hour, minute, second):
-    """
-    梅花易数起卦函数，根据时间起卦，年月日时起卦法
+def getTrigramByNumber(number: int) -> str:
+    return EIGHT_TRIGRAMS[number - 1]
 
-    Args:
-        year: 公历年
-        month: 公历月
-        day: 公历日
-        hour: 公历小时
-        minute: 公历分钟
-        second: 公历秒数
+def getInteractingGua(originalGuaUpper: str, originalGuaLower: str):
+    lines = TRIGRAM_BINARY[originalGuaLower] + TRIGRAM_BINARY[originalGuaUpper]
+    lower = lines[1:4]
+    upper = lines[2:5]
+    return BINARY_TRIGRAM.get(tuple(upper)), BINARY_TRIGRAM.get(tuple(lower))
 
-    Returns:
-        上卦, 下卦, 动爻, 上卦名，下卦名，动爻数字
-    """
+def meihua_yi_shu(method_type, lunar_year=None, lunar_month=None, lunar_day=None, hour_12=None,
+                  num1=None, num2=None, num3=None):
+    # 用新的 meihuaYiShu 逻辑，但兼容旧代码的参数传递与返回形态
+    import random
 
-    lunar_date = sxtwl.fromSolar(year, month, day)
+    def _meihuaYiShu(methodType: int,
+                     year_di_zhi_index: int = 0,
+                     lm: int = 0,
+                     ld: int = 0,
+                     lh: int = 0,
+                     n1: int = 0,
+                     n2: int = 0,
+                     n3: int = 0):
+        # 核心新逻辑
+        if methodType == 1:
+            total_upper = year_di_zhi_index + lm + ld
+            upper_num = total_upper % 8
+            upper_num = 8 if upper_num == 0 else upper_num
+            total_lower = year_di_zhi_index + lm + ld + lh
+            lower_num = total_lower % 8
+            lower_num = 8 if lower_num == 0 else lower_num
+            moving_yao = total_lower % 6
+            moving_yao = 6 if moving_yao == 0 else moving_yao
+            up = getTrigramByNumber(upper_num)
+            low = getTrigramByNumber(lower_num)
+        elif methodType == 2:
+            upper_num = (n1 + n2) % 8
+            upper_num = 8 if upper_num == 0 else upper_num
+            lower_num = (n1 + n2 + n3) % 8
+            lower_num = 8 if lower_num == 0 else lower_num
+            moving_yao = (n1 + n2 + n3) % 6
+            moving_yao = 6 if moving_yao == 0 else moving_yao
+            up = getTrigramByNumber(upper_num)
+            low = getTrigramByNumber(lower_num)
+        else:
+            # 保留原来随机功能
+            up = random.choice(EIGHT_TRIGRAMS)
+            low = EIGHT_TRIGRAMS[(EIGHT_TRIGRAMS.index(up) + 1) % 8]
+            moving_yao = random.randint(1, 6)
 
-    # 地支序数
-    zhi_num = {
-        "子": 1, "丑": 2, "寅": 3, "卯": 4,
-        "辰": 5, "巳": 6, "午": 7, "未": 8,
-        "申": 9, "酉": 10, "戌": 11, "亥": 12
-    }
+        iUp, iLow = getInteractingGua(up, low)
+        original_hex = TRIGRAM_BINARY[low] + TRIGRAM_BINARY[up]
+        mutated_hex = list(original_hex)
+        mutated_hex[moving_yao - 1] = 1 - mutated_hex[moving_yao - 1]
+        bian_low = BINARY_TRIGRAM.get(tuple(mutated_hex[:3]))
+        bian_up = BINARY_TRIGRAM.get(tuple(mutated_hex[3:]))
+        return {
+            "本卦": (up, low),
+            "互卦": (iUp, iLow),
+            "变卦": (bian_up, bian_low),
+            "动爻": moving_yao
+        }
 
-    # 年数：地支序数
-    year_number = zhi_num[Zhi[lunar_date.getYearGZ().dz]]
+    if method_type == 1:
+        # 以农历数字的简单方式当地支序号，这里用 (lunar_year % 12) 简化模拟
+        index_ = (lunar_year % 12) if lunar_year else 0
+        result = _meihuaYiShu(1, index_, lunar_month or 0, lunar_day or 0, hour_12 or 0)
+    elif method_type == 2:
+        result = _meihuaYiShu(2, 0, 0, 0, 0, num1 or 0, num2 or 0, num3 or 0)
+    else:
+        result = _meihuaYiShu(3)
 
-    # 月数：农历月数
-    month_number = lunar_date.getLunarMonth()
+    up, low = result["本卦"]
+    iup, ilow = result["互卦"]
+    bup, blow = result["变卦"]
+    yao = result["动爻"]
+    # 尽量保持旧返回值结构
+    gua_ben_index = 0
+    ben_gua_name = up + low
+    gua_bian_index = 0
+    bian_gua_name = (bup or "") + (blow or "")
+    gua_hu_index = 0
+    hu_gua_name = (iup or "") + (ilow or "")
+    moving_yao = yao
+    return (gua_ben_index, ben_gua_name, gua_bian_index, bian_gua_name, gua_hu_index, hu_gua_name, moving_yao)
 
-    # 日数：农历日数
-    day_number = lunar_date.getLunarDay()
+def _get_current_time_info(dt: Optional[datetime.datetime] = None):
+    # 用新的 getCurrentTimeInfo 逻辑，但仅返回旧代码需要的 3 个值
+    import pytz, datetime
+    import sxtwl
+    if dt is None:
+        tz = pytz.timezone("Asia/Shanghai")
+        china_time = datetime.datetime.now(tz)
+    else:
+        if dt.tzinfo is None:
+            tz = pytz.timezone("Asia/Shanghai")
+            china_time = tz.localize(dt)
+        else:
+            china_time = dt
 
-    # 时数：地支序数
-    hour_number = zhi_num[Zhi[lunar_date.getHourGZ(hour).dz]]
-    
-    # 上卦
-    upper_trigram_number = (year_number + month_number + day_number) % 8
-    if upper_trigram_number == 0:
-        upper_trigram_number = 8  # 余数为0时取8
-    
-    # 得到上卦的名称
-    shanggua_name = BaGua[upper_trigram_number - 1]
-
-    # 下卦
-    lower_trigram_number = (year_number + month_number + day_number + hour_number) % 8
-    if lower_trigram_number == 0:
-        lower_trigram_number = 8  # 余数为0时取8
-    
-    # 得到下卦的名称
-    xiagua_name = BaGua[lower_trigram_number - 1]
-
-    # 动爻
-    moving_yao_number = (year_number + month_number + day_number + hour_number) % 6
-    if moving_yao_number == 0:
-        moving_yao_number = 6  # 余数为0时取6
-
-    return upper_trigram_number, lower_trigram_number, moving_yao_number, shanggua_name, xiagua_name, moving_yao_number
-
-def _get_current_time_info():
-    """
-    获取当前时间信息和四柱
-    """
-    tz = pytz.timezone("Asia/Shanghai")
-    china_time = datetime.datetime.now(tz)
     day = sxtwl.fromSolar(china_time.year, china_time.month, china_time.day)
-
-    # 农历信息
-    lunar_year = day.getLunarYear(False)
+    lunar_year_sxtwl = day.getLunarYear(False)
     lunar_month = day.getLunarMonth()
     lunar_day = day.getLunarDay()
-
-    lunar_year_cn = str(lunar_year) + "年"
-    lunar_month_cn = ('闰' if day.isLunarLeap() else '') + ymc[lunar_month - 1] + "月"
-    lunar_day_cn = rmc[lunar_day - 1]
+    lunar_year_cn = str(lunar_year_sxtwl) + "年"
+    lunar_month_cn = ('闰' if day.isLunarLeap() else '') + LUNAR_MONTHS_CN[lunar_month - 1] + "月"
+    lunar_day_cn = LUNAR_DAYS_CN[lunar_day - 1]
     lunar_time = f"{lunar_year_cn}{lunar_month_cn}{lunar_day_cn}"
-
-     # 公历信息
     gregorian_time = china_time.strftime('%Y-%m-%d %H:%M:%S')
-
-    # 四柱信息
     yTG = day.getYearGZ()
     mTG = day.getMonthGZ()
     dTG = day.getDayGZ()
-    hTG = day.getHourGZ(china_time.hour)
-
-    sizhu_cn = f"{Gan[yTG.tg]}{Zhi[yTG.dz]}年 {Gan[mTG.tg]}{Zhi[mTG.dz]}月 {Gan[dTG.tg]}{Zhi[dTG.dz]}日 {Gan[hTG.tg]}{Zhi[hTG.dz]}时"
-
-    upper_trigram_number, lower_trigram_number, moving_yao_number, shanggua_name, xiagua_name, _ = _calculate_gua_numbers(china_time.year, china_time.month, china_time.day, china_time.hour, china_time.minute, china_time.second)
-    
-    return lunar_time, gregorian_time, sizhu_cn, upper_trigram_number, lower_trigram_number, moving_yao_number, shanggua_name, xiagua_name
-
+    hTG = day.getHourGZ(china_time.hour % 24)
+    sizhu_cn = (f"{HEAVENLY_STEMS[yTG.tg]}{EARTHLY_BRANCHES[yTG.dz]}年 "
+                f"{HEAVENLY_STEMS[mTG.tg]}{EARTHLY_BRANCHES[mTG.dz]}月 "
+                f"{HEAVENLY_STEMS[dTG.tg]}{EARTHLY_BRANCHES[dTG.dz]}日 "
+                f"{HEAVENLY_STEMS[hTG.tg]}{EARTHLY_BRANCHES[hTG.dz]}时")
+    return lunar_time, gregorian_time, sizhu_cn
 
 @tool(parse_docstring=True)
-def divination(query: str) -> str:
+def divination(query: str,
+               datetime_str: Optional[str] = None,
+               method: int = 1,
+               num1: Optional[int] = None,
+               num2: Optional[int] = None,
+               num3: Optional[int] = None) -> str:
     """Plum Blossom Numerology Divination, Fortune Telling, and so on
 
     Args:
         query: Divination content and related information
+        datetime_str: Optional datetime string in format 'YYYY-MM-DD HH:MM:SS'
+        method: Method of divination (1: time-based, 2: number-based, 3: random)
+        num1: First number for number-based divination
+        num2: Second number for number-based divination
+        num3: Third number for number-based divination
     """
-    lunar_time, gregorian_time, sizhu_cn, upper_trigram_number, lower_trigram_number, moving_yao_number, shanggua_name, xiagua_name = _get_current_time_info()
+    if datetime_str:
+        try:
+            dt = datetime.datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+            china_time = dt if dt.tzinfo else pytz.timezone("Asia/Shanghai").localize(dt)
+        except ValueError as e:
+            return f"Error: Invalid datetime format. Please use 'YYYY-MM-DD HH:MM:SS'. Details: {str(e)}"
+    else:
+        tz = pytz.timezone("Asia/Shanghai")
+        china_time = datetime.datetime.now(tz)
     
+    if method == 1:
+        lunar_info = sxtwl.fromSolar(china_time.year, china_time.month, china_time.day)
+        lunar_year = lunar_info.getLunarYear(False)
+        lunar_month = lunar_info.getLunarMonth()
+        lunar_day = lunar_info.getLunarDay()
+        hour_12 = china_time.hour % 12
+        hour_12 = 12 if hour_12 == 0 else hour_12
+        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(
+            1, lunar_year=lunar_year, lunar_month=lunar_month, lunar_day=lunar_day, hour_12=hour_12
+        )
+    elif method == 2:
+        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(
+            2, num1=num1, num2=num2, num3=num3
+        )
+    else:
+        gua_ben, ben_gua_name, gua_bian, bian_gua_name, gua_hu, hu_gua_name, dong_yao = meihua_yi_shu(3)
+
+    lunar_time, gregorian_time, sizhu_cn = _get_current_time_info(china_time)
+
     system_prompt = f"""## 角色设定
 你是一位精通梅花易数的资深算卦先生，拥有数十年周易研究经验。
-你将参考下面梅花易数完整流程，严谨、专业、细致地为咨询者进行周易预测，并严格遵循参考格式输出
-如未传入形象或者数字或者时间则默认使用当前时间起卦
-当前时间和四柱等信息：
+你将参考下面梅花易数分析流程，严谨、专业、细致地为咨询者进行周易预测，并严格遵循参考格式输出
+按照下面信息起卦，下面信息是以及计算好的不管是明天还是今天
+时间和四柱等信息：
 - 公历时间：{gregorian_time}
 - 农历时间：{lunar_time}
 - 四柱：{sizhu_cn}
-- 上卦数字：{upper_trigram_number}，卦象：{shanggua_name}
-- 下挂数字：{lower_trigram_number}，卦象：{xiagua_name}
-- 动爻数字：{moving_yao_number}
+- 本卦：{ben_gua_name}
+- 变卦：{bian_gua_name}
+- 互卦：{hu_gua_name}
+- 动爻：第{dong_yao}爻
 
-## 梅花易数完整流程
-
-### 1. 起卦（确定基本卦象）
-
-1. **明确问题**：明确你想要预测的问题，并保持心境平和。
-
-2. **选择起卦方法**：可以选择数字法、时间法、或者形象法。
-    *   **数字法**：
-        1. 随意选取两组数字（每组一个或多个），可以从环境中获取。
-        2. 将**第一组数字之和**除以 8，取余数得**下卦**。
-        3. 将**第二组数字之和**除以 8，取余数得**上卦**。
-        4. 将**两组数字之和**除以 6，取余数确定动爻。**如果余数为0，则动爻为第六爻。**
-        
-    *   **时间法（标准时间起卦法，不使用纳甲）**：
-        1. **上卦**：(**年数 + 农历月数 + 农历日数**) 除以 8，取余数，根据先天八卦顺序（乾一，兑二，离三，震四，巽五，坎六，艮七，坤八）确定上卦。
-        2. **下卦**：(**年数 + 农历月数 + 农历日数 + 时辰数**) 除以 8，取余数，根据先天八卦顺序确定下卦。
-        3. **动爻**：(**年数 + 农历月数 + 农历日数 + 时辰数**) 除以 6，取余数，确定动爻。**如果余数为0，则动爻为第六爻。**
-        *   补充说明：
-            *   年份：使用地支序数计算，例如子年为1，丑年为2，直到亥年为12。
-            *   月份：使用农历月份数。
-            *   日期：使用农历日期数。
-            *   时辰：使用地支序数，例如子时为1，丑时为2，直到亥时为12。
-    -   **时间法（纳甲体系）**：
-        1.  上卦：取农历月份和日期各自对应的纳甲数值相加。将该和除以 8，取余数，作为上卦。
-        2.  下卦：取时辰的地支序数并找出对应的纳甲数值。将时辰的纳甲数值与月份和日期的纳甲数值相加。将该和除以 8，取余数，作为下卦。
-        3.  动爻：将月份、日期、时辰的纳甲数值相加。取此和除以 6, 取余数，确定动爻。
-        - 补充说明：年份数字的确定，是以地支序数来计算的，例如子年为1，丑年为2，以此类推，直到亥年为12。
-        - 月份和日期的数字直接使用农历月份和日期的数字。
-        - 时辰的数字也是用地支序数来计算的，例如子时为1，丑时为2，以此类推，直到亥时为12。
-
-    *   **形象法**：
-        1. 观察某一事物所呈现的象，如颜色、形状、方位、数量。
-        2. 匹配八卦。
-        *   补充说明：形象法可以结合多种感官，例如听到的声音、闻到的气味等。需要灵活运用，并结合当时的具体情境进行判断。
-        *   例如：
-            *   乾卦 (☰)：天、圆形、刚健、君王、父亲、头部、西北方、金属、白色、马等。
-            *   坤卦 (☷)：地、方形、柔顺、民众、母亲、腹部、西南方、土壤、黄色、牛等。
-            *   震卦 (☳)：雷、震动、长男、足部、东方、木、青色、龙等。
-            *   巽卦 (☴)：风、进入、长女、股部、东南方、木、绿色、鸡、**高而细长的物体等**。
-            *   坎卦 (☵)：水、陷阱、中男、耳朵、北方、水、黑色、猪、**静止的水体等**。
-            *   离卦 (☲)：火、依附、中女、眼睛、南方、火、红色、雉（野鸡）、**发光发热的物体等**。
-            *   艮卦 (☶)：山、停止、少男、手部、东北方、土、黄色、狗、**静止的物体等**。
-            *   兑卦 (☱)：泽、喜悦、少女、口部、西方、金属、白色、羊、**有缺口的物体等**。
-
-### 2. 排卦（形成卦象结构）
-
-1. **确定本卦**：根据上下卦组成完整的六爻卦。
-2. **确定动爻**：根据起卦时计算的余数，找出动爻是第几爻 (从下往上数)。**如果余数为0，则为第六爻。**
-3. **确定互卦**：由本卦的中间四个爻构成新卦，即 **2、3、4 爻为下卦，3、4、5 爻为上卦**。
-4. **确定变卦**：根据动爻变化，将本卦中动爻位置的爻阴阳互换，形成变卦。只有动爻才变，其他爻保持不变。
-
-
-### 3. 分析卦象（多维度解读）
+## 梅花易数分析流程
+### 1. 分析卦象（多维度解读）
 
 1. **五行生克**：
 
@@ -293,7 +308,7 @@ def divination(query: str) -> str:
         *   **卦气旺衰：** 根据卦气的旺衰来判断时间的远近。
         *   **卦象：** 例如，离和震可以表示快速，艮和坤可以表示缓慢。
 
-### 4. 判断吉凶（综合考量）
+### 2. 判断吉凶（综合考量）
 
 判断吉凶是整个预测过程的最终目的，需要综合考虑以上所有因素，并结合实际情况进行判断。
 
@@ -343,19 +358,3 @@ def divination(query: str) -> str:
 
 
 tools = [divination]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
