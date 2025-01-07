@@ -76,6 +76,7 @@ enable_private = true # 是否允许私聊
 enable_group = true  # 是否允许群聊
 command_start = "/"  # 命令触发前缀，/chat model xxx  , /chat clear， /chat down等
 superusers = "123456789"  # 超级用户的qq
+debug = true
 
 # 消息分段，需要让LLM增加分段关键词，根据关键词分段发送
 [chunk]

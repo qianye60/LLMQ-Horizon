@@ -102,6 +102,9 @@ async def build_graph(config: Config, llm):
 
     async def chatbot(state: State):
         messages = state["messages"]
+        if plugin_config.plugin.debug:
+            print("传入消息: \n", messages)
+        
         # 固定
         fixed_messages = []
         if hasattr(config.llm, "system_prompt") and config.llm.system_prompt:
@@ -117,6 +120,8 @@ async def build_graph(config: Config, llm):
         # 合并
         messages = fixed_messages + trimmed_messages
         response = await llm_with_tools.ainvoke(messages) 
+        if plugin_config.plugin.debug:
+            print("AI回复: \n", response)
         return {"messages": [response]}
 
     graph_builder = StateGraph(State)

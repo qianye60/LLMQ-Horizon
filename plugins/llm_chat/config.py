@@ -37,6 +37,7 @@ class PluginConfig(BaseModel):
     command_start: str = "?"
     superusers: str = ""
     media_include_text: bool = True
+    debug: bool = False
 
 class ResponseConfig(BaseModel):
     """回复消息配置"""
@@ -90,6 +91,7 @@ class Config(BaseModel):
                 command_start=toml_config["plugin_settings"].get("command_start", "?"),
                 superusers=toml_config["plugin_settings"].get("superusers", ""),
                 media_include_text=toml_config["plugin_settings"].get("media_include_text", True),
+                debug=toml_config["plugin_settings"].get("debug", False),  # 新增读取debug配置
                 chunk=ChunkConfig(
                     enable=toml_config.get("chunk", {}).get("enable", False),
                     words=toml_config.get("chunk", {}).get("words", ["||"]),
