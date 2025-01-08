@@ -10,15 +10,15 @@ import json
 import time
 import re
 import os
-code_runner = config.get("code_runner", {})
+code_generation_running = config.get("code_generation_running", {})
 
-judge0_api_key = code_runner.get("judge0_api_key")
-cpu_time_limit = code_runner.get("cpu_time_limit", 5)
-wall_time_limit = code_runner.get("wall_time_limit", 8)
-judge0_url = code_runner.get("judge0_url")
-openai_api_key = code_runner.get("openai_api_key")
-openai_base_url = code_runner.get("openai_base_url")
-model = code_runner.get("model", "gemini-exp-1206")
+judge0_api_key = code_generation_running.get("judge0_api_key")
+cpu_time_limit = code_generation_running.get("cpu_time_limit", 5)
+wall_time_limit = code_generation_running.get("wall_time_limit", 8)
+judge0_url = code_generation_running.get("judge0_url")
+openai_api_key = code_generation_running.get("openai_api_key")
+openai_base_url = code_generation_running.get("openai_base_url")
+model = code_generation_running.get("model", "gemini-exp-1206")
 CACHE_FILE = "languages_cache.json"
 UPDATE_INTERVAL = 2 * 24 * 60 * 60
 # submit_fields = "stdout,stderr,compile_output,exit_code,exit_signal,created_at,finished_at,time,wall_time,memory,source_code"
@@ -362,7 +362,7 @@ def llm_code_generator(query: str) -> dict:
                 - Generate code that is as compatible as possible with various evaluation environments, such as using common input/output methods.
 
                 ## 3. Environment Constraints
-                - Third-party libraries are prohibited.
+                - Third-party libraries are prohibited. For example, using urllib instead of requests in Python
                 - Avoid over-reliance on specific environments:
                     - Use standardized APIs whenever possible.
                     - Avoid relying on the Node.js environment; use standard JavaScript or TypeScript APIs, unless environment support is ensured.
@@ -382,6 +382,7 @@ def llm_code_generator(query: str) -> dict:
                 - **Specific APIs:** Not all standard library APIs are available in all Judge0 environments. For example, `System.console()` in Java usually returns `null` in the Judge0 environment. Avoid using these environment-specific APIs; use common methods instead.
                 - **Newline Characters:** Some languages, like C/C++, automatically add newline characters with `println`. However, some languages like Rust do not automatically add newline characters with `print`; ensure you add them according to the problem requirements.
                 - **Special handling**: js should use standard js functions and use process.stdin to read standard input. In TypeScript, avoid using `require`. Read input through `process.stdin`, use type declarations to resolve type issues, and output using the standard `console.log`.It is necessary to add the declare declaration at the beginning of the code to resolve TypeScript type checking issues.
+                - The default time zone is UTC.  The China time zone needs to be converted (UTC+8) `timedelta(hours=8)`
 
                 Strictly  return a json object, should be like this {{'code':'python code', 'language':'python3', 'stdin':'standard input'}}.  
                 The 'language' field must be one of the following: {', '.join(VALID_LANGUAGES)}. 
@@ -436,8 +437,8 @@ def llm_code_generator(query: str) -> dict:
 
 
 @tool(parse_docstring=True)
-def code_runner(query: str) -> str:
-    """Generate code and run it or run user-provided code
+def code_generation_running(query: str) -> str:
+    """Write code as required and run it, or run user code
 
     Args:
         query: Natural language description of the code requirement, e.g. "write a C program to sum numbers from 1 to 100"
@@ -469,49 +470,53 @@ def code_runner(query: str) -> str:
         formatted_result = format_submission_result(result)
         if not formatted_result:
             return "代码执行结果格式化失败。"
-            
-        return formatted_result
+        
+        return {
+            "source_code": source_code,
+            "language": language,
+            "execution_result": formatted_result
+        }
         
     except Exception as e:
         return f"代码执行过程中发生错误: {str(e)}"
 
-tools = [code_runner]
+tools = [code_generation_running]
 
-# print(code_runner("""编写一个循环打印十次标准输入的go程序，
+# print(code_generation_running("""编写一个循环打印十次标准输入的go程序，
 # 标准输入为你好世界"""))
-# print(code_runner("编写一个循环打印十次标准输入的python3程序，标准输入为你好世界"))
-# print(code_runner("编写一个循环打印十次标准输入的python2程序，标准输入为你好世界"))
-# print(code_runner("编写一个程序，标准输入为你好世界，然后使用汇编语言(Assembly)循环打印十次该输入"))
-# print(code_runner("编写一个Bash脚本，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个C程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个C++程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Clojure程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个C#程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个COBOL程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Common Lisp程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个D程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Elixir程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个F#程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Fortran程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Groovy程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Haskell程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Java程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个JavaScript程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Kotlin程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Lua程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个OCaml程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Octave程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Pascal程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Perl程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个PHP程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个输出 'Hello, World!' 的Plain Text文件")) # Plain Text 没有标准输入的概念
-# print(code_runner("编写一个Python程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Python2程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个R程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Ruby程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Rust程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Scala程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个查询所有名为 'users' 的表中所有记录的SQL语句")) # SQL 没有标准输入的概念
-# print(code_runner("编写一个Swift程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个TypeScript程序，标准输入为你好世界，然后循环打印十次该输入"))
-# print(code_runner("编写一个Visual Basic.Net程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个循环打印十次标准输入的python3程序，标准输入为你好世界"))
+# print(code_generation_running("编写一个循环打印十次标准输入的python2程序，标准输入为你好世界"))
+# print(code_generation_running("编写一个程序，标准输入为你好世界，然后使用汇编语言(Assembly)循环打印十次该输入"))
+# print(code_generation_running("编写一个Bash脚本，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个C程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个C++程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Clojure程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个C#程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个COBOL程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Common Lisp程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个D程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Elixir程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个F#程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Fortran程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Groovy程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Haskell程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Java程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个JavaScript程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Kotlin程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Lua程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个OCaml程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Octave程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Pascal程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Perl程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个PHP程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个输出 'Hello, World!' 的Plain Text文件")) # Plain Text 没有标准输入的概念
+# print(code_generation_running("编写一个Python程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Python2程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个R程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Ruby程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Rust程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Scala程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个查询所有名为 'users' 的表中所有记录的SQL语句")) # SQL 没有标准输入的概念
+# print(code_generation_running("编写一个Swift程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个TypeScript程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_generation_running("编写一个Visual Basic.Net程序，标准输入为你好世界，然后循环打印十次该输入"))

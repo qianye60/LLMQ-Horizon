@@ -1,6 +1,6 @@
 # 外部工具列表：
 # - analyze_image: 视觉
-# - code_runner: 代码运行，需要部署judge0,参考README
+# - code_generation_running: 代码运行，需要部署judge0,参考README
 # - divination: 梅花易数
 # - create_art: 绘画
 # - get_github_trending: github热板
@@ -70,7 +70,7 @@ shenzi = "speech:shenzi:<VOICE_ID>"
 keli = "speech:keli:<VOICE_ID>"
 xigewen = "speech:xigewen:<VOICE_ID>"
 
-[code_runner]
+[code_generation_running]
 judge0_url = "https://judge0.example.com"  # Judge0服务的URL
 judge0_api_key = "<JUDGE0_API_KEY>"  # 在此填入Judge0 API密钥
 openai_api_key = "<OPENAI_API_KEY>"

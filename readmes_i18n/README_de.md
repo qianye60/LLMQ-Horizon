@@ -109,7 +109,7 @@ docker compose down
 3. **Konfigurieren Sie config-tools.toml:**
 
     ```toml
-    [code_runner]
+    [code_generation_running]
     judge0_url = "http://your-server:2358"
     judge0_api_key = "your-api-key"
     ```
