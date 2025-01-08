@@ -265,9 +265,9 @@ async def handle_chat(
 
     # 构建消息ID，传递给LangGraph
     if isinstance(event, GroupMessageEvent):
-        message_id = f"Group_ID: {event.group_id}\nUSER_ID: {event.user_id}"
+        message_id = f"Group_ID: {event.group_id}\nUser_ID: {event.user_id}"
     else:
-        message_id = f"USER_ID: {event.user_id}"
+        message_id = f"User_ID: {event.user_id}"
 
     # 构建消息内容
     message_content = await build_message_content(message, media_urls, event, user_name, message_id)

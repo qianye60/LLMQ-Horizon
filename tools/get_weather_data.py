@@ -1,94 +1,133 @@
-import os
-import requests
-from datetime import datetime
 from langchain_core.tools import tool
+from typing import Dict, Union
+from datetime import datetime
 from .config import config
+import requests
 import pytz
+import os
 
 weather_config = config.get('get_weather_data', {})
 os.environ["OPENWEATHER_API_KEY"] = weather_config.get('api_key', '')
 
+def get_coordinates(location: str, country_code: str, api_key: str) -> Union[tuple[float, float], str]:
+    """根据城市名和国家代码获取地理坐标，返回坐标元组或错误消息。"""
+    url = f'http://api.openweathermap.org/geo/1.0/direct?q={location},{country_code}&limit=1&appid={api_key}'
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        if data:
+            lat, lon = data[0]['lat'], data[0]['lon']
+            print(f"成功获取 {location}, {country_code} 的坐标: 纬度={lat}, 经度={lon}")
+            return lat, lon
+        else:
+            error_msg = f"未找到城市 '{location}', 国家代码 '{country_code}' 的坐标信息。"
+            print(error_msg)
+            return error_msg
+    except requests.exceptions.RequestException as e:
+        error_msg = f"获取坐标时发生网络错误: {type(e).__name__}: {e}"
+        print(error_msg)
+        return error_msg
+    except ValueError as e:
+        error_msg = f"解析坐标响应时发生错误: {e}"
+        print(error_msg)
+        return error_msg
+    except Exception as e:
+        error_msg = f"获取坐标时发生未知错误: {e}"
+        print(error_msg)
+        return error_msg
+
+def _format_timestamp(timestamp: int | float, timezone_str: str) -> str | int | float:
+    """格式化时间戳为指定时区的日期时间字符串。"""
+    try:
+        tz = pytz.timezone(timezone_str)
+        dt = datetime.fromtimestamp(timestamp, tz)
+        return dt.strftime('%Y-%m-%d %H:%M:%S %Z%z')
+    except pytz.exceptions.UnknownTimeZoneError:
+        print(f"警告: 未知的时区 '{timezone_str}'，无法格式化时间戳。")
+        return timestamp
+    except Exception as e:
+        print(f"警告: 格式化时间戳时发生错误: {e}")
+        return timestamp
+
+def _format_timestamps_in_data(data: dict | list, timezone_str: str) -> dict | list:
+    """递归地格式化 JSON 数据中的时间戳字段。"""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key in ('dt', 'sunrise', 'sunset', 'moonrise', 'moonset') and isinstance(value, (int, float)):
+                data[key] = _format_timestamp(value, timezone_str)
+            elif isinstance(value, (dict, list)):
+                _format_timestamps_in_data(value, timezone_str)
+    elif isinstance(data, list):
+        for item in data:
+            _format_timestamps_in_data(item, timezone_str)
+    return data
+
+def get_onecall_weather(latitude: float, longitude: float, api_key: str, exclude: list[str] | None = None) -> Union[Dict, str]:
+    """使用 OpenWeatherMap One Call API 获取天气数据并格式化时间戳，返回数据字典或错误消息。"""
+    base_url = 'https://api.openweathermap.org/data/3.0/onecall'
+    params = {
+        'lat': latitude,
+        'lon': longitude,
+        'appid': api_key,
+        'units': 'metric',
+        'exclude': ','.join(exclude) if exclude else None
+    }
+    try:
+        print(f"请求天气数据中... (纬度={latitude}, 经度={longitude})")
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        if 'timezone' in data:
+            data = _format_timestamps_in_data(data, data['timezone'])
+        print(f"成功获取天气数据。状态码: {response.status_code}")
+        return data
+    except requests.exceptions.RequestException as e:
+        error_msg = f"获取天气数据时发生网络错误: {type(e).__name__}: {e}"
+        print(error_msg)
+        return error_msg
+    except ValueError as e:
+        error_msg = f"解析天气数据响应时发生错误: {e}"
+        print(error_msg)
+        return error_msg
+    except Exception as e:
+        error_msg = f"获取天气数据时发生未知错误: {e}"
+        print(error_msg)
+        return error_msg
+
+
 @tool(parse_docstring=True)
-def get_weather_data(location: str, country_code: str, query_time: str = None, query_type: str = 'current') -> str:
-    """Retrieve weather data for a specific location and time.
+def get_weather_data(location: str, country_code: str, forecast_type: str = "future_48h_weather") -> Union[Dict, str]:
+    """Use OpenWeatherMap One Call API to get weather data.
 
     Args:
-        location: City name or a municipality/sub-provincial city in China. e.g., Chengdu, Beijing, Shanghai.
-        country_code: The ISO 3166 country code for the location. e.g., CN.
-        query_time: The time for which to retrieve weather data, in "YYYY-MM-DD HH:MM:SS" format. Optional.
-        query_type: The type of weather data to retrieve. Options include "current" (current), "today" (today), "hourly" (hourly), "daily" (daily). "daily" can query the weather for each day of the week. Optional.
+        location (str): City name.  e.g. 长沙, London.
+        country_code (str): The ISO 3166 country code for the location.  e.g. CN, US, GB.
+        forecast_type (str): The requested weather forecast type. Optional values: 'current_weather', 'future_48h_weather', 'future_8day_weather'.
     """
-    api_key = os.environ.get('OPENWEATHER_API_KEY')
+    print(f"开始获取 {location}, {country_code} 的 {forecast_type} 天气预报...")
+    api_key = os.getenv("OPENWEATHER_API_KEY")
+    geo_result = get_coordinates(location, country_code, api_key)
+    if isinstance(geo_result, str):
+        return f"获取坐标失败: {geo_result}"
+    lat, lon = geo_result
 
-    if not api_key:
-        return "API key not found. Please set the OPENWEATHER_API_KEY environment variable."
-
-    geo_url = f'http://api.openweathermap.org/geo/1.0/direct?q={location},{country_code}&appid={api_key}'
-    geo_response = requests.get(geo_url)
-    geo_data = geo_response.json()
-
-    if not geo_data:
-        return "Location not found."
-
-    lat = geo_data[0]['lat']
-    lon = geo_data[0]['lon']
-
-    exclude_options = {
-        'current': 'minutely,hourly,daily,alerts',
-        'today': 'current,minutely,hourly,alerts',
-        'hourly': 'current,minutely,daily,alerts',
-        'daily': 'current,minutely,hourly,alerts',
-        'alerts': 'current,minutely,hourly,daily'
+    exclude_map = {
+        'current_weather': ['hourly', 'daily'],
+        'future_48h_weather': ['current', 'daily'],
+        'future_8day_weather': ['current', 'hourly'],
     }
+    if forecast_type not in exclude_map:
+        error_msg = f"错误的预报类型: '{forecast_type}'。请选择 'current_weather', 'future_48h_weather' 或 'future_8day_weather'。"
+        print(error_msg)
+        return error_msg
 
-    exclude_param = exclude_options.get(query_type, 'minutely,hourly,daily,alerts')
+    exclude_list = ['alerts', 'minutely'] + exclude_map[forecast_type]
 
-    if query_time:
-        query_timestamp = int(datetime.strptime(query_time, '%Y-%m-%d %H:%M:%S').timestamp())
-        weather_url = f'https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={lat}&lon={lon}&dt={query_timestamp}&appid={api_key}&units=metric'
-    else:
-        weather_url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude={exclude_param}&appid={api_key}&units=metric'
+    weather_result = get_onecall_weather(lat, lon, api_key, exclude=exclude_list)
+    if isinstance(weather_result, str):
+        return f"获取天气数据失败: {weather_result}"
 
-    weather_response = requests.get(weather_url)
-    weather_data = weather_response.json()
-
-    def format_timestamp(timestamp, timezone_str):
-      """格式化时间戳为指定时区的日期时间字符串。"""
-      try:
-          tz = pytz.timezone(timezone_str)
-          dt = datetime.fromtimestamp(timestamp, tz)
-          return dt.strftime('%Y-%m-%d %H:%M:%S')
-      except Exception:
-          return timestamp
-    
-    if 'timezone' in weather_data:
-        timezone_str = weather_data['timezone']
-
-        if 'daily' in weather_data:
-          for day_data in weather_data['daily']:
-              day_data['dt'] = format_timestamp(day_data['dt'], timezone_str)
-              day_data['sunrise'] = format_timestamp(day_data['sunrise'], timezone_str)
-              day_data['sunset'] = format_timestamp(day_data['sunset'], timezone_str)
-              day_data['moonrise'] = format_timestamp(day_data['moonrise'], timezone_str)
-              day_data['moonset'] = format_timestamp(day_data['moonset'], timezone_str)
-        if 'hourly' in weather_data:
-            for hour_data in weather_data['hourly']:
-                hour_data['dt'] = format_timestamp(hour_data['dt'], timezone_str)
-        if 'current' in weather_data:
-            weather_data['current']['dt'] = format_timestamp(weather_data['current']['dt'], timezone_str)
-            weather_data['current']['sunrise'] = format_timestamp(weather_data['current']['sunrise'], timezone_str)
-            weather_data['current']['sunset'] = format_timestamp(weather_data['current']['sunset'], timezone_str)
-    
-    current_datetime = datetime.now()
-    date_str = current_datetime.strftime('%Y-%m-%d')
-    time_str = current_datetime.strftime('%H:%M:%S')
-    weekday_str = current_datetime.strftime('%A')
-
-    return {
-        'date': date_str,
-        'time': time_str,
-        'weekday': weekday_str,
-        'weather_data': weather_data
-    }
+    return weather_result
 
 tools = [get_weather_data]

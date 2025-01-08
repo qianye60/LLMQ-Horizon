@@ -70,7 +70,9 @@ def get_utc8_time():
     """获取当前时间的UTC+8时间"""
     utc_now = datetime.now(timezone.utc)
     utc8_time = utc_now + timedelta(hours=8)
-    return utc8_time.strftime("%Y-%m-%d %H:%M:%S")
+    weekdays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+    weekday = weekdays[utc8_time.weekday()]
+    return f"{utc8_time.strftime('%Y-%m-%d')} ({weekday}) {utc8_time.strftime('%H:%M:%S')}"
 
 async def remove_trigger_words(message: Message, event: MessageEvent) -> str:
     """移除命令前缀,并将@CQ码转换为@真实昵称格式"""
