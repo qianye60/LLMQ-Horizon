@@ -4,11 +4,11 @@
 
 # 🤖 LLMQ-Horizon QQ Chatbot
 
-**An intelligent QQ chatbot based on NoneBot2 and LangGraph, supporting multi-model conversation, tool calling, and session management**
+**An intelligent QQ chatbot based on NoneBot2 and LangGraph, supporting multi-model conversations, tool invocation, and session management.**
 
 <br>
 
-**Tools are all written using Function-calling, without using plugins, referring to [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
+**Tools are written using Function-calling, without using plugins, refer to [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
 
 <br>
 
@@ -16,29 +16,33 @@
 [![Docker Release](https://img.shields.io/docker/pulls/bitfennec/llmq-horizon?color=%230077c8&label=Docker%20Pulls&logo=docker&logoColor=white&style=flat)](https://hub.docker.com/r/bitfennec/llmq-horizon)
 [![License](https://img.shields.io/github/license/Mgrsc/LLMQ-Horizon?color=%2300c853&label=MIT%20License&style=flat)](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE)
 
+<br>
+
+[English](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_en.md) | [Deutsch](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_de.md) | [Español](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_es.md) | [Français](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_fr.md) | [日本語](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_ja.md)
+
 </div>
 
 ---
 
 ## ✨ Key Features
 
--   **🔌 Rich Tool Integrations:** Code execution, weather query, divination, drawing, etc.
--   **🤖 Support for Multiple Large Models:** OpenAI, Google Gemini, Groq, etc.
--   **💬 Complete Conversation Management:** Group chat/private chat, multi-turn conversations, session isolation
--   **🎯 Flexible Trigger Methods:** @, keywords, command prefix
+-   **🔌 Rich Tool Integrations:** Code execution, weather queries, divination, drawing, etc.
+-   **🤖 Supports Multiple Large Models:** OpenAI, Google Gemini, Groq, etc.
+-   **💬 Comprehensive Conversation Management:** Group chat/private chat, multi-turn conversations, session isolation
+-   **🎯 Flexible Triggering Methods:** @ mentions, keywords, command prefixes
 -   **🎨 Multimedia Capabilities:** Image analysis, audio and video processing
--   **⚡ Automatic Session Management:** Timeout cleanup, concurrency control
--   **🦖 Powerful Extensibility:** Ability to write custom tools, use tools to control NoneBot
+-   **⚡ Automatic Session Management:** Timeout cleaning, concurrency control
+-   **🦖 Powerful Extensibility:** You can write your own tools, and use tools to control nonebot
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Preparation of Deployment Environment
+### 1. Deployment Environment Preparation
 
 -   Docker and Docker Compose
 -   Stable network environment
--   Recommended systems: Ubuntu 22.04 and above, Debian 11 and above
+-   Recommended Systems: Ubuntu 22.04 and above, Debian 11 and above
 
 ### 2. Installation Steps
 
@@ -51,19 +55,19 @@ cd LLMQ-Horizon
 cp config-tools.toml.example config-tools.toml
 cp config.toml.example config.toml
 cd napcat/config/
-mv onebot11_qq.json onebot11_<your_QQ_number>.json  # Replace with your actual QQ number
+mv onebot11_qq.json onebot11_<your_QQ>.json  # Replace with your actual QQ number
 
-# 3. Modify the configuration (refer to the comments in the configuration file for modification)
+# 3. Modify configurations (refer to the comments in the configuration files for modification)
 vim config.toml
 vim config-tools.toml
 
 # 4. Start the service
 docker compose up -d
 
-# 5. Scan to log in
+# 5. Scan the QR code to log in
 docker compose logs -f
 
-# Restart LLMQ service
+# Restart the LLMQ service
 docker compose restart llmq
 
 # Stop all services
@@ -77,7 +81,7 @@ docker compose down
 
 [Judge0 Official Deployment Tutorial](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
 
-1.  **Prepare an environment with Ubuntu 22.04 or above and Docker, configure cgroup v1:**
+1.  **Prepare an environment with Ubuntu 22.04 or higher and Docker, and configure cgroup v1:**
 
     ```bash
     sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
@@ -92,7 +96,7 @@ docker compose down
     unzip judge0-v1.13.1.zip
     cd judge0-v1.13.1
 
-    # Generate two passwords and set passwords
+    # Generate two passwords and set the passwords
     openssl rand -hex 32
 
     # Use the generated passwords to update the REDIS_PASSWORD and POSTGRES_PASSWORD variables in the judge0.conf file.
@@ -104,7 +108,7 @@ docker compose down
     sleep 5s
     ```
 
-    Your Judge0 CE v1.13.1 instance is now up and running; access http://<your_server_IP_address>:2358/docs for documentation.
+    Your Judge0 CE v1.13.1 instance is now up and running; visit http://<your server IP address>:2358/docs for documentation.
 
 3.  **Configure config-tools.toml:**
 
@@ -121,9 +125,9 @@ docker compose down
 
 [Memos Official Deployment Tutorial](https://www.usememos.com/docs/install/container-install)
 
-1.  **Prepare an environment with Ubuntu 22.04 or above and Docker:**
+1.  **Prepare an environment with Ubuntu 22.04 or higher and Docker:**
 
-2.  **Write the docker-compose.yaml file**
+2.  **Create a docker-compose.yaml file**
 
     ```yaml
     services:
@@ -137,13 +141,13 @@ docker compose down
         restart: always
     ```
 
-3.  **Start Memos**
+3.  **Start memos**
 
     ```shell
     docker compose up -d
     ```
 
-    You can now access Memos at http://<your_server_IP_address>:5230. Get the Tokens in Settings within Memos.
+    You can now access memos at http://<your server IP address>:5230. Get the Tokens in the Settings of Memos.
 
 4.  **Fill in the configuration file**
 
@@ -160,33 +164,85 @@ docker compose down
 
 ## 📝 Command Description
 
-| Command                      | Description                        |
-| :--------------------------- | :--------------------------------- |
-| `/chat model <model_name>`   | Switch conversation model         |
-| `/chat clear`               | Clear all conversations            |
-| `/chat group <true/false>`  | Toggle group chat isolation       |
-| `/chat down`                | Disable chat feature             |
-| `/chat up`                  | Enable chat feature                |
-| `/chat chunk <true/false>`  | Toggle chunked message sending    |
+| Command                      | Description                                  |
+| :--------------------------- | :------------------------------------------- |
+| `/chat model <model name>`   | Switch the conversation model                |
+| `/chat clear`               | Clear all conversations                       |
+| `/chat group <true/false>`   | Turn on/off group chat isolation             |
+| `/chat down`                | Turn off the chat function                   |
+| `/chat up`                  | Turn on the chat function                    |
+| `/chat chunk <true/false>`   | Turn on/off segmented message sending        |
+
+## 🦊 Prompt Writing Tips
+
+<details>
+<summary>1. Basic Principles</summary>
+
+-   Clear Instructions: Use imperative language to clearly state the user's needs, ensuring the LLM can understand accurately.
+-   Provide Reference Examples/Text: Provide detailed examples and information to form a Few-shot-Prompt, helping the LLM strengthen its understanding of the intent.
+-   Structured Expression: Use markup symbols (such as XML tags, triple quotes, Markdown) to enhance readability and make the prompt clear.
+-   Output Control: Specify requirements for output format, language style, etc., to ensure the LLM generates output that meets user expectations.
+-   Layout Optimization: Carefully arrange the layout of the Prompt for easy understanding by the LLM.
+</details>
+<details>
+<summary>2. Other Tips</summary>
+
+-   List available tools, and explain and request for complex tools
+    ```
+    create_speech generates speech
+        - Maximum 40 characters, no emojis allowed
+        - Supported languages: Chinese, English, Japanese, German, French, Spanish, Korean, Arabic, Russian, Dutch, Italian, Polish, Portuguese
+        - Available voice mappings:
+            Keli = keli
+            Sigewinne = xigewen
+            Yae Miko = shenzi
+            Ding Zhen = dingzhen
+            Lei Jun = leijun
+            Lazy Sheep = lanyangyang
+    ```
+-   Require the tool to send back the file:// address
+    ```
+      Drawing, getting music, and tts must send the returned link or file path address to the user
+    ```
+-   Example of formatting tool return content
+    ```
+        # Example of optimizing the formatting of tool return content
+      Example of formatting data returned by get_weather_data:
+      * A: Tell me the weather in Changsha today
+          T: Call tool `get_weather_data` to get the weather
+          Q:
+          🌤️ {Location} Weather
+          🌅 Sunrise and Sunset: {xx:xx}-{xx:xx without year}
+          ⏱️ Time: {Time}
+          🌡️ Temperature: {Temperature}℃
+          💧 Humidity: {Humidity}%
+          🧣 Feels Like: {Feels Like}℃
+          🍃 Wind Direction and Speed: {Wind Direction}-{Wind Speed}
+          📋 Overall Situation: {Overall Analysis}
+          Baby, remember to wear more clothes when going out~ Be careful not to catch a cold
+    ```
+</details>
 
 ## ❗ Common Issues
+
+All tools have been tested. If you encounter problems, please refer to the following checks.
 
 <details>
 <summary>1. Login Failure</summary>
 
--   Check if the QQ number configuration is correct
--   Confirm the format of the napcat configuration file
--   View napcat container logs to troubleshoot
+-   Check if the QQ number configuration is correct.
+-   Confirm the napcat configuration file format.
+-   View napcat container logs to troubleshoot the issue.
 
 </details>
 
 <details>
-<summary>2. Tool Calling Failure</summary>
+<summary>2. Tool Invocation Failure</summary>
 
--   Confirm that the model supports function calling capabilities
--   Check relevant API key configurations
--   View LLMQ container logs to locate errors
--   Join [LangSmith](https://smith.langchain.com/) in the docker container for debugging
+-   Confirm that the model supports function calling capabilities.
+-   Check the relevant API key configurations.
+-   View LLMQ container logs to locate the error.
+-   Add [LangSmith](https://smith.langchain.com/) to the docker container for debugging.
 
     ```yaml
     environment:
@@ -201,7 +257,7 @@ docker compose down
 <details>
 <summary>3. Other Issues</summary>
 
--   For other issues, please join the QQ group for discussion
+-   For other issues, please join the QQ group for discussion.
     ![qrcode](static/qrcode.jpg)
 
 </details>
@@ -213,7 +269,7 @@ docker compose down
 -   [LangChain](https://github.com/langchain-ai/langchain)
 -   [Judge0](https://github.com/judge0/judge0)
 -   [Memos](https://github.com/usememos/memos)
--   [NapCat](https://github.com/NapNeko/NapCatQQ)
+-  [NapCat](https://github.com/NapNeko/NapCatQQ)
 
 ## 📄 License
 

@@ -4,11 +4,11 @@
 
 # 🤖 LLMQ-Horizon QQ チャットボット
 
-**NoneBot2とLangGraphをベースにしたインテリジェントなQQボットで、複数モデルの会話、ツール呼び出し、およびセッション管理をサポートします**
+**NoneBot2とLangGraphをベースにしたインテリジェントなQQボットで、多モデル対話、ツール呼び出し、セッション管理をサポート**
 
 <br>
 
-**ツールはすべてFunction-callingで記述されており、プラグインは使用していません。[OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) 、 [LangChain Tools](https://python.langchain.com/docs/how_to/#tools) を参考にしています。**
+**ツールはすべて Function-calling で記述されており、プラグインは使用していません。[OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) 、[LangChain Tools](https://python.langchain.com/docs/how_to/#tools) を参照してください。**
 
 <br>
 
@@ -16,29 +16,33 @@
 [![Docker Release](https://img.shields.io/docker/pulls/bitfennec/llmq-horizon?color=%230077c8&label=Docker%20Pulls&logo=docker&logoColor=white&style=flat)](https://hub.docker.com/r/bitfennec/llmq-horizon)
 [![License](https://img.shields.io/github/license/Mgrsc/LLMQ-Horizon?color=%2300c853&label=MIT%20License&style=flat)](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE)
 
+<br>
+
+[English](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_en.md) | [Deutsch](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_de.md) | [Español](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_es.md) | [Français](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_fr.md) | [日本語](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_ja.md)
+
 </div>
 
 ---
 
-## ✨ 主な特徴
+## ✨ 主な機能
 
 -   **🔌 豊富なツール統合：** コード実行、天気予報、占い、絵画など
--   **🤖 複数大規模モデルのサポート：** OpenAI、Google Gemini、Groqなど
--   **💬 充実した会話管理：** グループチャット/プライベートチャット、複数回会話、セッション分離
+-   **🤖 複数の大規模モデルをサポート：** OpenAI、Google Gemini、Groqなど
+-   **💬 完璧な対話管理：** グループチャット/プライベートチャット、複数回の対話、セッション分離
 -   **🎯 柔軟なトリガー方式：** @、キーワード、コマンドプレフィックス
--   **🎨 マルチメディア機能：** 画像分析、音声ビデオ処理
--   **⚡ 自動セッション管理：** タイムアウトクリーンアップ、同時実行制御
--   **🦖 強力な拡張機能：** 独自のツールの記述、ツールによるnonebotの制御
+-   **🎨 マルチメディア機能：** 画像分析、音声・動画処理
+-   **⚡ 自動セッション管理：** タイムアウトクリア、同時実行制御
+-   **🦖 強力な拡張性：** 独自のツールを作成可能、ツールでnonebotを制御可能
 
 ---
 
 ## 🚀 クイックスタート
 
-### 1. デプロイ環境の準備
+### 1. 展開環境の準備
 
 -   DockerとDocker Compose
 -   安定したネットワーク環境
--   推奨システム：Ubuntu 22.04以上、Debian 11以上
+-   推奨システム：Ubuntu 22.04 以上、Debian 11以上
 
 ### 2. インストール手順
 
@@ -51,9 +55,9 @@ cd LLMQ-Horizon
 cp config-tools.toml.example config-tools.toml
 cp config.toml.example config.toml
 cd napcat/config/
-mv onebot11_qq.json onebot11_<あなたのQQ>.json  # 実際のQQ番号に置き換えます
+mv onebot11_qq.json onebot11_<あなたのQQ>.json  # 実際のQQ番号に置き換える
 
-# 3. 設定の変更（設定ファイルのコメントを参照して変更してください）
+# 3. 設定の変更（設定ファイルのコメントを参照して変更）
 vim config.toml
 vim config-tools.toml
 
@@ -63,7 +67,7 @@ docker compose up -d
 # 5. QRコードログイン
 docker compose logs -f
 
-# LLMQサービスの再起動
+# LLMQサービスを再起動
 docker compose restart llmq
 
 # すべてのサービスを停止
@@ -77,7 +81,7 @@ docker compose down
 
 [Judge0 公式デプロイチュートリアル](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
 
-1. **Ubuntu 22.04以上の環境とDockerを準備し、cgroup v1を構成します。**
+1. **Ubuntu 22.04以上の環境とDockerを準備し、cgroup v1を設定します：**
 
     ```bash
     sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
@@ -85,28 +89,28 @@ docker compose down
     sudo reboot
     ```
 
-2. **Judge0をデプロイします。**
+2. **Judge0をデプロイ：**
 
     ```bash
     wget https://github.com/judge0/judge0/releases/download/v1.13.1/judge0-v1.13.1.zip
     unzip judge0-v1.13.1.zip
     cd judge0-v1.13.1
 
-    # 2つのパスワードを生成して設定します
+    # 2つのパスワードを生成し、設定します。
     openssl rand -hex 32
 
-    # 生成されたパスワードを使用して、judge0.confファイル内のREDIS_PASSWORDとPOSTGRES_PASSWORD変数を更新します。
+    # 生成したパスワードを使用して、judge0.confファイルのREDIS_PASSWORDとPOSTGRES_PASSWORD変数を更新します。
 
-    # サービスを起動します
+    # サービスを起動します。
     docker-compose up -d db redis
     sleep 10s
     docker-compose up -d
     sleep 5s
     ```
 
-    Judge0 CE v1.13.1インスタンスが起動し、実行されています。http://<あなたのサーバーIPアドレス>:2358/docsにアクセスしてドキュメントを参照してください。
+    Judge0 CE v1.13.1インスタンスが起動しました。ドキュメントは http://<あなたのサーバーIPアドレス>:2358/docs で参照できます。
 
-3. **config-tools.tomlを設定します。**
+3.  **config-tools.toml を設定します：**
 
     ```toml
     [code_generation_running]
@@ -121,9 +125,9 @@ docker compose down
 
 [Memos 公式デプロイチュートリアル](https://www.usememos.com/docs/install/container-install)
 
-1. **Ubuntu 22.04以上の環境とDockerを準備します。**
+1. **Ubuntu 22.04以上の環境とDockerを準備します：**
 
-2. **docker-compose.yamlファイルを作成します。**
+2. **docker-compose.yaml ファイルを作成します**
 
     ```yaml
     services:
@@ -137,15 +141,15 @@ docker compose down
         restart: always
     ```
 
-3. **Memosを起動します。**
+3. **memosを起動します**
 
     ```shell
     docker compose up -d
     ```
 
-    この時点で、http://<あなたのサーバーIPアドレス>:5230からMemosにアクセスできます。Memosの設定でトークンを取得します。
+    これで http://<あなたのサーバーIPアドレス>:5230 で memos にアクセスできます。memos の設定でトークンを取得します。
 
-4. **設定ファイルを記入します。**
+4. **設定ファイルを記入します**
 
     ```toml
     [memos]
@@ -160,19 +164,71 @@ docker compose down
 
 ## 📝 コマンド説明
 
-| コマンド                      | 説明                             |
-| :------------------------ | :------------------------------- |
-| `/chat model <モデル名>`   | 会話モデルの切り替え                 |
-| `/chat clear`             | すべての会話をクリア                 |
-| `/chat group <true/false>` | グループチャットの隔離のオン/オフ         |
-| `/chat down`              | 会話機能をオフにします               |
-| `/chat up`                | 会話機能をオンにします               |
-| `/chat chunk <true/false>` | 分割送信のオン/オフ                   |
+| コマンド                        | 説明                               |
+| :------------------------------ | :--------------------------------- |
+| `/chat model <モデル名>`      | 対話モデルを切り替える               |
+| `/chat clear`                   | すべてのセッションをクリアする         |
+| `/chat group <true/false>`     | グループチャットの分離を切り替える       |
+| `/chat down`                    | 対話機能をオフにする                 |
+| `/chat up`                      | 対話機能をオンにする                 |
+| `/chat chunk <true/false>`     | 分割送信を切り替える                 |
+
+## 🦊プロンプト作成のヒント
+
+<details>
+<summary>1.基本原則</summary>
+
+- 明確な指示: 命令形を使い、ユーザーの要求を明確に伝えることで、LLMが正確に理解できるようにします。
+- 参考例/テキストの提供: 詳細な例や情報を提供し、Few-shot-Promptを構成することで、LLMが意図をよりよく理解できるようにします。
+- 構造化された表現: XMLタグ、三重引用符、Markdownなどのマークを使用して可読性を高め、プロンプトを明確に表現します。
+- 出力制御: 出力形式や言語スタイルなどの要件を指定し、LLMがユーザーの期待に沿った出力を生成できるようにします。
+- レイアウトの最適化: プロンプトのレイアウトを慎重に調整し、LLMが理解しやすくします。
+</details>
+<details>
+<summary>2.その他のヒント</summary>
+
+- 利用可能なツールをリストし、複雑なツールについては説明と要件を示します。
+  ```
+  create_speechで音声を生成
+    - 最大40文字、絵文字不可
+    - 対応言語：中国語、英語、日本語、ドイツ語、フランス語、スペイン語、韓国語、アラビア語、ロシア語、オランダ語、イタリア語、ポーランド語、ポルトガル語
+    - 使用可能な音色：
+        可莉 = keli
+        西格雯 = xigewen
+        神子 = shenzi
+        丁真 = dingzhen
+        雷军 = leijun
+        懒羊羊 = lanyangyang
+  ```
+- ツールから返されるfile://アドレスを要求します。
+  ```
+    絵を描く、音楽を取得する、ttsの場合は、返されたリンクまたはファイルパスのアドレスをユーザーに送信する必要があります。
+  ```
+- ツールから返される内容のレイアウト例
+  ```
+      # ツールから返される内容のレイアウト最適化例
+    get_weather_dataから返されたデータ形式の例：
+    *   A: 今日の長沙の天気を教えて
+        T: ツール`get_weather_data`を呼び出して天気を取得
+        Q:
+        🌤️ {場所}の天気
+        🌅 日の出日の入り: {xx:xx}-{xx:xx年なし}
+        ⏱️   時間: {時間}
+        🌡️ 温度: {温度}℃
+        💧 湿度: {湿度}%
+        🧣 体感温度: {体感温度}℃
+        🍃 風向風速: {風向}-{風速}
+        📋 総合状況: {総合分析}
+        赤ちゃんは外出する際は服をたくさん着せてね〜風邪に気を付けて
+  ```
+</details>
 
 ## ❗ よくある質問
 
+すべてのツールはテスト済みです。問題がある場合は、以下を参照して確認してください。
+
 <details>
-<summary>1. ログインに失敗する</summary>
+<summary>1. ログイン失敗</summary>
 
 -   QQ番号の設定が正しいか確認してください
 -   napcatの設定ファイル形式を確認してください
@@ -181,12 +237,12 @@ docker compose down
 </details>
 
 <details>
-<summary>2. ツールの呼び出しに失敗する</summary>
+<summary>2. ツール呼び出し失敗</summary>
 
 -   モデルが関数呼び出し機能をサポートしているか確認してください
--   関連するAPIキーの設定を確認してください
+-   関連するAPIキー設定を確認してください
 -   LLMQコンテナのログを見てエラーを特定してください
--   [LangSmith](https://smith.langchain.com/)をDockerコンテナに追加してデバッグしてください。
+-   [LangSmith](https://smith.langchain.com/) をDockerコンテナに追加してデバッグします
 
     ```yaml
     environment:
@@ -201,7 +257,7 @@ docker compose down
 <details>
 <summary>3. その他の問題</summary>
 
--   その他の問題については、QQグループに参加して議論してください
+-   その他の問題はQQグループでご相談ください
     ![qrcode](static/qrcode.jpg)
 
 </details>
@@ -219,7 +275,7 @@ docker compose down
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
 
-このプロジェクトは[MITライセンス](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE)を採用しています。
+このプロジェクトは [MIT ライセンス](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE) の下でライセンスされています。
 
 Copyright © 2024 Bitfennec.
 
