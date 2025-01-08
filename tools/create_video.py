@@ -145,6 +145,8 @@ def create_video(prompt: str) -> str:
     try:
         # 优化提示词
         optimized_prompt = _optimize_prompt(prompt)
+        if not optimized_prompt:
+            return "提示词优化失败，无法继续处理"
         
         # 提交视频生成请求
         request_id = _submit_video_request(optimized_prompt)
@@ -156,11 +158,13 @@ def create_video(prompt: str) -> str:
         # 获取视频URL并下载
         video_path = _get_video_url(request_id)
         if not video_path:
-            return "视频生成失败"
+            return "视频生成失败或等待超时"
             
         return video_path
         
     except Exception as e:
-        return f"视频生成过程出错: {str(e)}"
+        error_msg = f"视频生成过程出错: {str(e)}"
+        print(error_msg)
+        return error_msg
 
 tools = [create_video]

@@ -471,19 +471,28 @@ def create_art(prompt: str, image_size: str = "square", style: str = "any", mode
         model: Model name. Available values: "sdxlx1", "cv3p", "rfv3", "sd35", "flux1s"
     """
     try:
-        size_enum = ImageSize(image_size)
-    except ValueError:
-        size_enum = ImageSize.SQUARE
+        # 验证并转换图片尺寸
+        try:
+            size_enum = ImageSize(image_size)
+        except ValueError:
+            return f"无效的图片尺寸: {image_size}. 可用选项: square, portrait, landscape"
         
-    provider = ProviderFactory.get_provider(model)
-    if not provider:
-        return "不支持的模型名称"
+        # 获取提供商
+        provider = ProviderFactory.get_provider(model)
+        if not provider:
+            return f"无效的模型名称: {model}. 可用选项: sdxlx1, cv3p, rfv3, sd35, flux1s"
         
-    try:
+        # 生成图片
         result = provider.generate_image(model, prompt, size_enum, style)
+        if not result:
+            return "图片生成失败: 未能获取有效的图片URL"
+        
         return result
+
     except Exception as e:
-        return f"生成图片失败: {str(e)}"
+        error_msg = f"图片生成过程发生错误: {str(e)}"
+        print(error_msg)
+        return error_msg
 
 tools = [create_art]
 

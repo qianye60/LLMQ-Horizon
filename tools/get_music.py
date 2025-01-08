@@ -272,6 +272,9 @@ def get_music(music_name: str, provider: str = "hhlq") -> str:
         music_name (str): music name e.g. "邓紫棋泡沫"
         provider (str): Music provider. Available values: "hhlq", "netease"
     """
+    if not music_name:
+        return "Error: Empty music name"
+
     # 1. 检查缓存
     cached_file = find_similar_cache(music_name)
     if cached_file:
@@ -286,16 +289,21 @@ def get_music(music_name: str, provider: str = "hhlq") -> str:
 
     if provider in provider_map:
         result = provider_map[provider](music_name)
+        if result is None:
+            return "Error: Failed to download music"
+        
         if provider == "hhlq" and (result == "下载失败" or "Failed to get music link" in result):
             print("hhlq API 下载失败，尝试使用网易云音乐")
             result = provider_map["netease"](music_name)
+            if result is None:
+                return "Error: Failed to download music from both providers"
+        
         return f"file://{result}"
     
-    else:
-        return "Unsupported music API provider"
+    return "Error: Unsupported music API provider"
 
 tools = [get_music]
 
 # if __name__ == "__main__":
-#     print(get_music(music_name="邓紫棋泡沫"))
-    # print(get_music(music_name="泡沫", provider="hhlq"))
+#     result = get_music(music_name="邓紫棋泡沫")
+#     print(f"Download result: {result}")

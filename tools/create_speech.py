@@ -54,6 +54,10 @@ def create_speech(text: str, timbre: str = None) -> str:
         text: Text to be converted
         timbre: timbre
     """
+    # 检查输入文本
+    if not text or not isinstance(text, str):
+        return "错误: 输入文本不能为空且必须为字符串类型"
+        
     if len(text) > MAX_TEXT_LENGTH:
         return f"错误: 文本超出{MAX_TEXT_LENGTH}字限制。当前长度：{len(text)}字"
         
@@ -67,7 +71,17 @@ def create_speech(text: str, timbre: str = None) -> str:
         tts = SiliconFlowTTS()
         tts.generate_speech(text, timbre, output_path)
         
+        # 验证文件是否成功生成
+        if not output_path.exists():
+            return "错误: 语音文件生成失败 - 文件未创建"
+            
+        if output_path.stat().st_size == 0:
+            output_path.unlink()
+            return "错误: 语音文件生成失败 - 文件大小为0"
+            
         return f"file://{TEMP_SERVER_DIR}/{filename}"
+    except requests.RequestException as e:
+        return f"错误: API请求失败 - {str(e)}"
     except Exception as e:
         return f"错误: 语音生成失败 - {str(e)}"
 
