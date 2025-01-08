@@ -7,8 +7,8 @@ import pytz
 import os
 
 weather_config = config.get('get_weather_data', {})
-os.environ["OPENWEATHER_API_KEY"] = weather_config.get('api_key', '')
-
+OPENWEATHER_API_KEY = weather_config.get('api_key', '')
+print(OPENWEATHER_API_KEY)
 def get_coordinates(location: str, country_code: str, api_key: str) -> Union[tuple[float, float], str]:
     """根据城市名和国家代码获取地理坐标，返回坐标元组或错误消息。"""
     url = f'http://api.openweathermap.org/geo/1.0/direct?q={location},{country_code}&limit=1&appid={api_key}'
@@ -98,27 +98,26 @@ def get_onecall_weather(latitude: float, longitude: float, api_key: str, exclude
 
 @tool(parse_docstring=True)
 def get_weather_data(location: str, country_code: str, forecast_type: str = "future_48h_weather") -> Union[Dict, str]:
-    """Use OpenWeatherMap One Call API to get weather data.
+    """Use OpenWeather to get current weather data, 48-hour forecast, and 8-day forecast.
 
     Args:
         location (str): City name.  e.g. 长沙, London.
         country_code (str): The ISO 3166 country code for the location.  e.g. CN, US, GB.
-        forecast_type (str): The requested weather forecast type. Optional values: 'current_weather', 'future_48h_weather', 'future_8day_weather'.
+        forecast_type (str): The requested weather forecast type.  Available options: "future_48h_weather" (next 48 hours' weather), "future_8day_weather" (next 8 days' weather).
     """
     print(f"开始获取 {location}, {country_code} 的 {forecast_type} 天气预报...")
-    api_key = os.getenv("OPENWEATHER_API_KEY")
+    api_key = OPENWEATHER_API_KEY
     geo_result = get_coordinates(location, country_code, api_key)
     if isinstance(geo_result, str):
         return f"获取坐标失败: {geo_result}"
     lat, lon = geo_result
 
     exclude_map = {
-        'current_weather': ['hourly', 'daily'],
         'future_48h_weather': ['current', 'daily'],
         'future_8day_weather': ['current', 'hourly'],
     }
     if forecast_type not in exclude_map:
-        error_msg = f"错误的预报类型: '{forecast_type}'。请选择 'current_weather', 'future_48h_weather' 或 'future_8day_weather'。"
+        error_msg = f"错误的预报类型: '{forecast_type}'。请选择 'future_48h_weather' 或 'future_8day_weather'。"
         print(error_msg)
         return error_msg
 
