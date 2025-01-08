@@ -73,6 +73,9 @@ xigewen = "speech:xigewen:<VOICE_ID>"
 [code_runner]
 judge0_url = "https://judge0.example.com"  # Judge0服务的URL
 judge0_api_key = "<JUDGE0_API_KEY>"  # 在此填入Judge0 API密钥
+openai_api_key = "<OPENAI_API_KEY>"
+openai_base_url = "https://api.example.com/v1"
+model = "gemini-exp-1206"
 cpu_time_limit = 5  # CPU时间限制
 wall_time_limit = 8  # 总时间限制
 

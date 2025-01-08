@@ -1,5 +1,5 @@
 # judge0
-# 测试通过语言: Assembly,Bash,C,C++,Clojure,C#,COBOL,Common Lisp,D,Elixir,F#,Fortran,Go,Groovy,Haskell,Java,JavaScript,Kotlin,Lua,OCaml,Octave,Pascal,Perl,PHP,Plain Text,Python,Python2,R,Ruby,Rust,Scala,SQL,Swift,TypeScript,Visual Basic.Net
+# 测试通过语言: Assembly,Bash,C,C++,Clojure,C#,COBOL,Common Lisp,D,Elixir,Fortran,Go,Groovy,Haskell,Java,JavaScript,Kotlin,Lua,OCaml,Octave,Pascal,Perl,PHP,Plain Text,Python,Python2,R,Ruby,Rust,Scala,SQL,Swift,TypeScript,Visual Basic.Net
 from langchain_core.tools import tool
 from datetime import datetime, timezone, timedelta
 from .config import config
@@ -16,6 +16,9 @@ judge0_api_key = code_runner.get("judge0_api_key")
 cpu_time_limit = code_runner.get("cpu_time_limit", 5)
 wall_time_limit = code_runner.get("wall_time_limit", 8)
 judge0_url = code_runner.get("judge0_url")
+openai_api_key = code_runner.get("openai_api_key")
+openai_base_url = code_runner.get("openai_base_url")
+model = code_runner.get("model", "gemini-exp-1206")
 CACHE_FILE = "languages_cache.json"
 UPDATE_INTERVAL = 2 * 24 * 60 * 60
 # submit_fields = "stdout,stderr,compile_output,exit_code,exit_signal,created_at,finished_at,time,wall_time,memory,source_code"
@@ -23,7 +26,7 @@ submit_fields = "stdout,stderr,compile_output,message,exit_code,exit_signal,stat
 
 _language_cache = None
 
-MAX_OUTPUT_LENGTH = 300  # 限制输出长度为1000字符
+MAX_OUTPUT_LENGTH = 300
 
 def _fetch_languages_from_api_():
     """
@@ -260,6 +263,8 @@ def format_submission_result(result):
                     formatted_result[key] = decoded_text[:MAX_OUTPUT_LENGTH] + "..."
                 else:
                     formatted_result[key] = decoded_text
+            except UnicodeDecodeError as e:
+                formatted_result[key] = f"Decode error: Invalid UTF-8 sequence at position {e.start}-{e.end}. Raw bytes: {result[key][e.start:e.end]}"
             except Exception as e:
                 formatted_result[key] = f"Decode error: {e}"
         else:
@@ -305,16 +310,9 @@ def format_submission_result(result):
 
 def base64_code(source_code, stdin=None):
     """
-    对源代码进行 Base64 编码。
-    如果提供了 stdin，也进行 Base64 编码。
+    对源代码进行 Base64 编码
     """
 
-    # 还原json dump的代码
-    if source_code.startswith('"') and source_code.endswith('"'):
-        source_code = source_code[1:-1]
-    # 使用 unicode_escape 来正确解码所有转义序列    
-    source_code = codecs.decode(source_code, 'unicode_escape')
-    
     encoded_source_code = base64.b64encode(source_code.encode("utf-8")).decode("utf-8")
     result = {"source_code": encoded_source_code}
     if stdin:
@@ -324,25 +322,196 @@ def base64_code(source_code, stdin=None):
     return result
 
 
+VALID_LANGUAGES = [
+    "python3", "python2", "Assembly", "Bash", "C", "C++", "Clojure", "C#", "COBOL", 
+    "Common Lisp", "D", "Elixir", "Fortran", "Go", "Groovy", "Haskell", "Java",
+    "JavaScript", "Kotlin", "Lua", "OCaml", "Octave", "Pascal", "Perl", "PHP", 
+    "Plain Text", "Python", "Python2", "R", "Ruby", "Rust", "Scala", "SQL", "Swift",
+    "TypeScript", "Visual Basic.Net"
+]
+def llm_code_generator(query: str) -> dict:
+    """使用 LLM 生成代码并格式化输出"""
+    url = f"{openai_base_url}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {openai_api_key}",
+        "Content-Type": "application/json",
+    }
+    print(f"Generating code for: {query}")
+
+    data = {
+        "model": "gemini-exp-1206",
+        "temperature": 0,
+        "messages": [
+            {
+                "role": "system",
+                "content": f"""# Role Definition
+                You are a professional code processor responsible for transforming user requirements into precise, executable code, ensuring it can be successfully submitted and run on the Judge0 platform. You must strictly adhere to Judge0's environment and rules, generating concise, efficient, and error-free programs.
+
+                # Core Principles
+
+                ## 1. Input Handling
+                - Standard input (stdin) is passed as is, without any modifications or preprocessing.
+                - No newline characters are automatically added.
+                - The program should gracefully handle potentially empty inputs, avoiding crashes.
+
+                ## 2. Code Generation
+                - Strictly follow user requirements, accurately implementing the functionality described by the user.
+                - Code should be concise, efficient, without comments, and compact.
+                - Avoid unnecessary processing, handling only essential operations.
+                - If the user directly provides code, only perform necessary formatting; do not modify code logic or content.
+                - Generate code that is as compatible as possible with various evaluation environments, such as using common input/output methods.
+
+                ## 3. Environment Constraints
+                - Third-party libraries are prohibited.
+                - Avoid over-reliance on specific environments:
+                    - Use standardized APIs whenever possible.
+                    - Avoid relying on the Node.js environment; use standard JavaScript or TypeScript APIs, unless environment support is ensured.
+                    - In Java, do not use `System.console()` to read input; use `Scanner`.
+                - Consider resource (time, memory) limitations when generating code. Avoid infinite loops, recursion overflows, etc.
+
+                # Considerations
+                - **Error Handling:**
+                    - Programs should not crash due to errors.
+                    - Use mechanisms like `try...catch` to catch potential exceptions.
+                    - When errors occur, output error messages to standard output or standard error output, but avoid directly throwing exceptions.
+                - **Performance:**
+                    - Code should be as efficient as possible.
+                    - Avoid algorithms with high time complexity.
+                    - Avoid issues like memory leaks.
+                    - When testing code, pay attention to `wall_time`; even if `time` is small, a large `wall_time` can still lead to timeouts.
+                - **Specific APIs:** Not all standard library APIs are available in all Judge0 environments. For example, `System.console()` in Java usually returns `null` in the Judge0 environment. Avoid using these environment-specific APIs; use common methods instead.
+                - **Newline Characters:** Some languages, like C/C++, automatically add newline characters with `println`. However, some languages like Rust do not automatically add newline characters with `print`; ensure you add them according to the problem requirements.
+                - **Special handling**: js should use standard js functions and use process.stdin to read standard input. In TypeScript, avoid using `require`. Read input through `process.stdin`, use type declarations to resolve type issues, and output using the standard `console.log`.It is necessary to add the declare declaration at the beginning of the code to resolve TypeScript type checking issues.
+
+                Strictly  return a json object, should be like this {{'code':'python code', 'language':'python3', 'stdin':'standard input'}}.  
+                The 'language' field must be one of the following: {', '.join(VALID_LANGUAGES)}. 
+                only output the code in json format.Do not output any explanations. """
+            },
+            {
+                "role": "user",
+                "content": query
+            }
+        ],
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "type": "object",
+                "properties": {
+                    "code": {"type": "string"},
+                    "language": {"type": "string", "enum": VALID_LANGUAGES},
+                    "stdin": {"type": "string", "description": "optional standard input"}
+                },
+                "required": ["code", "language"],
+                "additionalProperties": False,
+            }
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        response.raise_for_status()
+        response_json = response.json()
+        print(response_json)
+
+        if "choices" in response_json and len(response_json["choices"]) > 0:
+            message = response_json["choices"][0].get("message")
+            if message and "content" in message:
+                content = message["content"]
+                try:
+                    # 尝试解析 JSON
+                    return json.loads(content)
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON content: {e}. Content: {content}")
+                    return None
+            else:
+                print("Invalid response: 'message' or 'content' key missing.")
+                return None
+        else:
+            print("Invalid response: 'choices' key missing or empty.")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
 @tool(parse_docstring=True)
-def code_runner(source_code: str, language: str, stdin: str = None) -> str:
-    """Run the code and return detailed runtime data and results.
+def code_runner(query: str) -> str:
+    """Generate code and run it or run user-provided code
 
     Args:
-        source_code: Only used the standard library/core library, and the source code is correctly formatted.
-        language: Programming language. Optional: python3, python2, Assembly, Bash, C, C++, Clojure, C#, COBOL, Common Lisp, D, Elixir, F#, Fortran, Go, Groovy, Haskell, Java, JavaScript, Kotlin, Lua, OCaml, Octave, Pascal, Perl, PHP, Plain Text, Python, Python2, R, Ruby, Rust, Scala, SQL, Swift, TypeScript, Visual Basic .Net
-        stdin: Standard input required to run the program, optional
+        query: Natural language description of the code requirement, e.g. "write a C program to sum numbers from 1 to 100"
     """
-    language_id = _find_best_lang_match_(language)
-    if language_id is None:
-        return "未找到匹配的编程语言。"
+    try:
+        generated = llm_code_generator(query)
+        if not generated:
+            return "代码生成失败，无法获取代码生成结果。"
+        
+        source_code = generated.get('code')
+        language = generated.get('language')
+        stdin = generated.get('stdin')
+        
+        if not source_code or not language:
+            return "代码生成结果不完整，缺少必要的代码或语言信息。"
+        
+        language_id = _find_best_lang_match_(language)
+        if language_id is None:
+            return f"未找到匹配的编程语言：{language}"
 
-    base64_result = base64_code(source_code, stdin)
-    base64_source_code = base64_result["source_code"]
-    base64_stdin = base64_result.get("stdin")
-    result = submit_code(base64_source_code, language_id, base64_stdin)
-    formatted_result = format_submission_result(result)
-    return formatted_result
-
+        base64_result = base64_code(source_code, stdin)
+        base64_source_code = base64_result["source_code"]
+        base64_stdin = base64_result.get("stdin")
+        
+        result = submit_code(base64_source_code, language_id, base64_stdin)
+        if not result:
+            return "代码提交失败，无法获取执行结果。"
+            
+        formatted_result = format_submission_result(result)
+        if not formatted_result:
+            return "代码执行结果格式化失败。"
+            
+        return formatted_result
+        
+    except Exception as e:
+        return f"代码执行过程中发生错误: {str(e)}"
 
 tools = [code_runner]
+
+# print(code_runner("""编写一个循环打印十次标准输入的go程序，
+# 标准输入为你好世界"""))
+# print(code_runner("编写一个循环打印十次标准输入的python3程序，标准输入为你好世界"))
+# print(code_runner("编写一个循环打印十次标准输入的python2程序，标准输入为你好世界"))
+# print(code_runner("编写一个程序，标准输入为你好世界，然后使用汇编语言(Assembly)循环打印十次该输入"))
+# print(code_runner("编写一个Bash脚本，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个C程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个C++程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Clojure程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个C#程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个COBOL程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Common Lisp程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个D程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Elixir程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个F#程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Fortran程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Groovy程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Haskell程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Java程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个JavaScript程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Kotlin程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Lua程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个OCaml程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Octave程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Pascal程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Perl程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个PHP程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个输出 'Hello, World!' 的Plain Text文件")) # Plain Text 没有标准输入的概念
+# print(code_runner("编写一个Python程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Python2程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个R程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Ruby程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Rust程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Scala程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个查询所有名为 'users' 的表中所有记录的SQL语句")) # SQL 没有标准输入的概念
+# print(code_runner("编写一个Swift程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个TypeScript程序，标准输入为你好世界，然后循环打印十次该输入"))
+# print(code_runner("编写一个Visual Basic.Net程序，标准输入为你好世界，然后循环打印十次该输入"))
