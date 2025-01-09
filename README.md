@@ -152,7 +152,7 @@ docker compose down
 4. **填写配置文件**
 
     ```toml
-    [memos]
+    [memos_manage]
     url = "http://your-server:xxx"
     memos_token = "<填入获取的tokens>"
     default_visibility = "PRIVATE"

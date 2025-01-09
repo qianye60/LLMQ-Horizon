@@ -1,6 +1,7 @@
 from .config import config
 from langchain_core.tools import tool
 import requests
+from typing import Union, List
 
 def _get_headers(memos_config):
     """获取 HTTP 请求头."""
@@ -12,14 +13,11 @@ def _get_headers(memos_config):
         headers["Authorization"] = f"Bearer {auth_token}"
     return headers
 
-def _create_memo(base_url, headers, content, visibility, user_name=None):
+def _create_memo(base_url, headers, content, visibility):
     """创建备忘录."""
     url = f"{base_url}/api/v1/memos"
-    
-    formatted_content = f"{user_name}: {content}" if user_name else content
-    
     payload = {
-        "content": formatted_content,
+        "content": content,
         "visibility": visibility,
     }
     response = requests.post(url, headers=headers, json=payload)
@@ -33,7 +31,8 @@ def _create_memo(base_url, headers, content, visibility, user_name=None):
     else:
         return {"error": f"Create failed: {response.text}"}
 
-def _search_memos(base_url, headers, page_size, user_id=None, search_keyword=None, limit=None, user_name=None):
+
+def _search_memos(base_url, headers, page_size, user_id=None, search_keyword=None, limit=None):
     """检索备忘录."""
     url = f"{base_url}/api/v1/memos"
     params = {
@@ -42,32 +41,19 @@ def _search_memos(base_url, headers, page_size, user_id=None, search_keyword=Non
     if (user_id):
         params["filter"] = f"creator == 'users/{user_id}'"
 
-    # 使用传入的limit，如果没有则使用page_size
     result_limit = limit if limit else page_size
     
-    # 合并所有搜索关键词
     search_terms = []
     
-    # 处理search_keyword
     if search_keyword:
-        if isinstance(search_keyword, str):
+         if isinstance(search_keyword, str):
             search_terms.extend([kw.strip() for kw in search_keyword.split(',')])
-        elif isinstance(search_keyword, list):
+         elif isinstance(search_keyword, list):
             search_terms.extend(search_keyword)
-        else:
-            search_terms.append(str(search_keyword))
-    
-    # 添加user_name作为搜索关键词
-    if user_name:
-        if isinstance(user_name, str):
-            search_terms.extend([name.strip() for name in user_name.split(',')])
-        elif isinstance(user_name, list):
-            search_terms.extend(user_name)
-        else:
-            search_terms.append(str(user_name))
+         else:
+            search_terms.append(str(search_keyword))    
             
     if not search_terms:
-        # 无搜索关键词时的逻辑保持不变
         response = requests.get(url, headers=headers, params=params)
         if (response.status_code == 200):
             data = response.json()
@@ -105,7 +91,6 @@ def _search_memos(base_url, headers, page_size, user_id=None, search_keyword=Non
                     return {"error": f"Search failed: {response.text}"}
 
             for memo in all_memos:
-                # 修改添加到combined_memos的数据结构
                 combined_memos.append({
                     "name": memo["name"],
                     "updateTime": memo["updateTime"].replace("T", " ").replace("Z", ""),
@@ -113,31 +98,17 @@ def _search_memos(base_url, headers, page_size, user_id=None, search_keyword=Non
                         kw, f"\033[91m{kw}\033[0m"
                     )
                 })
-        # 去重并只取指定数量
         unique_memos = {m["name"]: m for m in combined_memos}
         result_list = list(unique_memos.values())[:result_limit]
         return {"memos": result_list}
 
 def _delete_memo(base_url, headers, memo_ids):
-    """删除备忘录.
-    
-    Args:
-        memo_ids: 可以是单个ID或多个ID的列表
-    """
+    """删除备忘录."""
     if not memo_ids:
         return {"error": "Memo not found."}
     
-    # 将输入统一转换为列表
-    if isinstance(memo_ids, str):
-        # 支持逗号分隔的字符串
-        ids = [id.strip() for id in memo_ids.split(',')]
-    elif isinstance(memo_ids, list):
-        ids = memo_ids
-    else:
-        ids = [str(memo_ids)]
-    
     results = []
-    for memo_id in ids:
+    for memo_id in memo_ids:
         memo_name = f"memos/{memo_id}"
         url = f"{base_url}/api/v1/{memo_name}"
         response = requests.delete(url, headers=headers)
@@ -149,18 +120,17 @@ def _delete_memo(base_url, headers, memo_ids):
     
     return {"results": results}
 
-memos_config = config.get("memos", {})
+memos_config = config.get("memos_manage", {})
 @tool(parse_docstring=True)
-def memos_manage(operation: str, create_content: str = None, search_keyword: str = None, delete_id: str = None, limit: int = None, user_name: str = None) -> str:
+def memos_manage(operation: str, create_content: str = None, search_keyword: str = None, delete_id: List[int] = None, limit: int = None) -> str:
     """Create, retrieve, and delete memos, operate on memos, and use memos.
 
     Args:
-        operation: The type of operation, which can be "create", "search", or "delete".
-        create_content: The content to be recorded in the memo. Use ###%%& as a separator for multiple memos (only used when the operation is "create").
-        search_keyword: The keyword(s) to search for memos. Multiple keywords are separated by commas. If not provided, the latest memos will be returned (only used when the operation is "search").
-        delete_id: The ID(s) of the memo(s) to be deleted. Multiple IDs are supported and separated by commas (only used when the operation is "delete").
+        operation: "create", "search", or "delete".
+        create_content: Memo content, including user name in the format "user_name: content" (e.g., "blaze: Today eat natto"). Multiple memos separated by "###%%&". Required for "create".
+        search_keyword: Memo retrieval keywords. Retrieve the latest memo of a user using the username. If it is empty, return all the latest memos.  Only used for "search".
+        delete_id: The ID of the memo(s) to be deleted.  It can be a single ID (e.g., [300]) or multiple IDs (e.g., [300, 200, 100]).
         limit: Limits the number of search results (only used when the operation is "search").
-        user_name: When the operation is "create", it is added as a prefix to the content; when the operation is "search", it is used as a search keyword.
     """
     global memos_config
     if (memos_config is None):
@@ -189,12 +159,12 @@ def memos_manage(operation: str, create_content: str = None, search_keyword: str
 
         results = []
         for cnt in contents_list:
-            create_result = _create_memo(base_url, headers, cnt, default_visibility, user_name)
+            create_result = _create_memo(base_url, headers, cnt, default_visibility)
             results.append(create_result)
         return {"results": results}
 
     elif (operation == "search"):
-        return _search_memos(base_url, headers, default_page_size, user_id, search_keyword, limit, user_name)
+        return _search_memos(base_url, headers, default_page_size, user_id, search_keyword, limit)
 
     elif (operation == "delete"):
         if (not delete_id):
@@ -205,25 +175,3 @@ def memos_manage(operation: str, create_content: str = None, search_keyword: str
         return {"error": f"Invalid operation: {operation}"}
 
 tools = [memos_manage]
-
-# 创建备忘录
-# create_result = memos("create", create_content="今天我最喜欢小猫")
-# print("Create Result:", create_result)
-
-# 检索备忘录
-# search_result = memos("search", search_keyword=["南瓜", "test", "小猫"])
-# print("Search Result:", search_result)
-
-# # 删除备忘录
-# delete_result = memos("delete", delete_id="93")
-# print("Delete Result:", delete_result)
-
-# 删除多个备忘录
-# delete_result = memos_manage("delete", delete_id="93,94,95")
-# print("Delete Result:", delete_result)
-
-# 示例：创建多条备忘录 
-# """
-# create_result = memos_manage("create", create_content='''今天我最喜欢小猫,它真可爱###$$$%%%明天我最喜欢小狗,它也很可爱###$$$%%%后天我最喜欢小兔子''')
-# print("Create Result:", create_result)
-# """

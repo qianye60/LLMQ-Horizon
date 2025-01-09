@@ -9,7 +9,7 @@
 # - jina_reader: https://jina.ai/reader/
 # - jina_search: jina的搜索
 # - picture_api: 图片接入api
-# - memos_manage.py: 备忘录需要部署memos，参考README，https://github.com/usememos/memos
+# - memos_manage: 备忘录需要部署memos，参考README，https://github.com/usememos/memos
 # 内置工具:
 # - tavily: 搜索引擎https://tavily.com/
 [tools]
@@ -82,7 +82,7 @@ wall_time_limit = 8  # 总时间限制
 [picture_api]
 api = "https://picture.netqianye.com/api.php?type=" # 在此填入请求接口,例如:"https://picture.netqianye.com/api.php?type=" type设定:触发工具AI将匹配用户输入,例如:"动漫图片"则type=动漫
 
-[memos]
+[memos_manage]
 url = "https://memos.example.com" #memos地址
 memos_token = "<MEMOS_TOKEN>" # memos tokens
 default_visibility = "PRIVATE" # memos可用查看的范围 PRIVATE:仅可见当前tokens所属memos， PUBLIC可查看所有公开的memos
