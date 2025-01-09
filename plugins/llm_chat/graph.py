@@ -7,12 +7,14 @@ from langchain_core.messages import SystemMessage, trim_messages, HumanMessage, 
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from langchain_core.language_models import LanguageModelInput
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import (
+    ChatGoogleGenerativeAI,
+    HarmBlockThreshold,
+    HarmCategory,
+)
 from .tools import load_tools
-from functools import wraps
 from .config import Config
 from .config import plugin_config
-import asyncio
 import json
 
 groq_models = {
@@ -67,6 +69,14 @@ async def get_llm(model=None):
                 max_tokens=plugin_config.llm.max_tokens,
                 google_api_key=plugin_config.llm.google_api_key,
                 top_p=plugin_config.llm.top_p,
+                safety_settings = {
+                    HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY: HarmBlockThreshold.BLOCK_NONE,
+                },
             )
         else:
             print("使用 OpenAI")
