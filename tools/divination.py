@@ -1,13 +1,11 @@
-from langchain_core.prompts import ChatPromptTemplate
 from typing import Any, Optional, List, Dict
-from langchain_core.language_models import LanguageModelInput
-from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from .config import config
 from .utils.real_random import get_random_numbers
 import datetime
 import pytz
 import sxtwl
+import requests
 
 
 divination_config = config.get("divination", {})
@@ -38,36 +36,6 @@ r"""         तारका तिमिरं दीपो मायावश�
 ===========`-.`___`-.__\ \___  /__.-'_.'_.-'================
                         `=--=-'    不会画梅花，画个佛祖保佑"""
                         
-class MyOpenAI(ChatOpenAI):
-    @property
-    def _default_params(self) -> Dict[str, Any]:
-        """Get the default parameters for calling OpenAI API."""
-        params = super()._default_params
-        if "max_completion_tokens" in params:
-            params["max_tokens"] = params.pop("max_completion_tokens")
-        return params
-
-    def _get_request_payload(
-        self,
-        input_: LanguageModelInput,
-        *,
-        stop: Optional[List[str]] = None,
-        **kwargs: Any,
-    ) -> dict:
-        payload = super()._get_request_payload(input_, stop=stop, **kwargs)
-        if "max_completion_tokens" in payload:
-            payload["max_tokens"] = payload.pop("max_completion_tokens")
-        return payload
-
-llm = MyOpenAI(
-    api_key = divination_config.get("api_key"),
-    base_url = divination_config.get("base_url"),
-    model = divination_config.get("model"),
-    temperature = 0,
-    max_tokens = 4096,
-    top_p = 1,
-)
-
 HEAVENLY_STEMS = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
 EARTHLY_BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 LUNAR_MONTHS_CN = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
@@ -363,14 +331,32 @@ def divination(query: str,
 ```"""
     
     
-    messages = ChatPromptTemplate.from_messages(
-         [("system", system_prompt), ("user", "{query}")]
-    )
+    payload = {
+        "model": divination_config.get("model"),
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": query}
+        ],
+        "temperature": 0,
+        "max_tokens": 4096,
+        "top_p": 1,
+    }
     
-    prompt = messages.invoke({"query": query})
-    response = llm.invoke(prompt)
-    
-    return response.content
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {divination_config.get('openai_api_key')}"
+    }
+    url = f"{divination_config.get('openai_base_url')}/chat/completions"
+
+    try:
+        r = requests.post(url, json=payload, headers=headers)
+        r.raise_for_status()
+        resp_json = r.json()
+        response_text = resp_json["choices"][0]["message"]["content"]
+    except Exception as e:
+        response_text = f"Error calling API: {e}"
+
+    return response_text
 
 
 tools = [divination]
