@@ -145,7 +145,7 @@ async def initialize_resources():
         graph_builder = await build_graph(plugin_config, llm)
 
 
-async def _process_llm_response(result: dict) -> str:
+async def _process_llm_response(result: dict, thread_id: str) -> str:
     """处理LLM返回的消息，提取回复内容"""
     if not result["messages"]:
         print("警告: 结果消息列表为空")
@@ -161,6 +161,21 @@ async def _process_llm_response(result: dict) -> str:
                 return f"工具调用失败: {error_msg}"
             print("工具调用错误: 未知错误(无错误信息)")
             return "工具调用失败，但没有错误信息"
+        if (not last_message.content) or (not last_message.content.strip()):
+            # 检查是否是 AI 安全拦截
+            finish_reason = getattr(last_message, "response_metadata", {}).get("finish_reason")
+            if finish_reason == "SAFETY":
+                print("AI消息安全拦截，阻断回复 -> 清理会话")
+                async with sessions_lock:
+                    if thread_id in sessions:
+                        del sessions[thread_id]
+                return "AI消息因安全策略被拦截。"
+            
+            print("空回复 -> 清理会话")
+            async with sessions_lock:
+                if thread_id in sessions:
+                    del sessions[thread_id]
+            return "对不起，我没有理解您的问题。"
             
         if last_message.content:
             return last_message.content.strip()
@@ -184,14 +199,10 @@ async def _handle_langgraph_error(e: Exception, thread_id: str) -> str:
     print(f"错误类型: {type(e)}")
     print(f"完整异常信息: {e}")
     
-    if "insufficient tool messages following tool_calls message" in error_message:
-        print("工具调用消息序列不完整错误，重置会话状态")
-        async with sessions_lock:
-            if thread_id in sessions:
-                del sessions[thread_id]
-        await chat_handler.finish("对话状态异常已重置，请重试")
-        return
-        
+    print("出现异常 -> 清理会话")
+    async with sessions_lock:
+        if thread_id in sessions:
+            del sessions[thread_id]
     return (plugin_config.responses.token_limit_error 
             if "'list' object has no attribute 'strip'" in error_message
             else plugin_config.responses.general_error)
@@ -304,7 +315,7 @@ async def handle_chat(
         truncated_messages = result["messages"][-2:]
         print(format_messages_for_print(truncated_messages))
         
-        response = await _process_llm_response(result)
+        response = await _process_llm_response(result, thread_id)
     except Exception as e:
         response = await _handle_langgraph_error(e, thread_id)
     finally:
