@@ -164,6 +164,29 @@ docker compose down
 
 </details>
 
+<details>
+<summary>🌞 新闻获取 (get_news - SynapseNews)</summary>
+
+[SynapseNews 项目地址](https://github.com/Mgrsc/SynapseNews)
+
+1. **准备环境**
+ - 🐳 Docker Engine 24.0+
+ - 🛠️ Docker Compose v2.0+
+
+2. 🐳 Docker Compose 部署
+```shell
+git clone https://github.com/Mgrsc/SynapseNews.git
+cd synapsenews
+```
+
+- 创建或修改 config.toml 配置文件
+- 根据需要调整 docker-compose.yaml
+
+```shell
+docker compose up -d
+```
+</details>
+
 ## 📝 命令说明
 
 | 命令                      | 说明                             |

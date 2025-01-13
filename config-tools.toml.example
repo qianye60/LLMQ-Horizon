@@ -88,3 +88,6 @@ memos_token = "<MEMOS_TOKEN>" # memos tokens
 default_visibility = "PRIVATE" # memos可用查看的范围 PRIVATE:仅可见当前tokens所属memos， PUBLIC可查看所有公开的memos
 page_size = 10 # 最大返回数量
 user_id = 6 # 账户的id
+
+[get_news]
+base_url = "<BASE_URL>"
