@@ -68,8 +68,8 @@ def normalize_filename(filename: str) -> str:
     """
     # 保留字母、数字、下划线和中文字符，其他替换为空格
     normalized = re.sub(r'[^\w\u4e00-\u9fff]', ' ', filename)
-    # 将连续空格替换为单个下划线
-    normalized = re.sub(r'\s+', '_', normalized.strip())
+    # 将所有空格（包括单个空格）替换为下划线
+    normalized = re.sub(r'\s', '_', normalized.strip())
     return normalized
 
 def get_cached_filename(song_url, output_dir="."):
