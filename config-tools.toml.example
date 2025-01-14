@@ -10,11 +10,12 @@
 # - jina_search: jina的搜索
 # - picture_api: 图片接入api
 # - memos_manage: 备忘录需要部署memos，参考README，https://github.com/usememos/memos
+# - group_manage: 群管理工具(禁言/头衔/群信息)
 # 内置工具:
 # - tavily: 搜索引擎https://tavily.com/
 [tools]
 builtin = ["tavily_search"]  # 启用内置的tavily搜索工具
-enabled = ["get_github_trending", "analyze_image"]  # 启用外部工具列表
+enabled = ["get_github_trending", "analyze_image", "group_manage"]  # 启用外部工具列表
 
 [tavily]
 api_key = "<TAVILY_API_KEY>"  # 在此填入你的Tavily API密钥
@@ -88,6 +89,10 @@ memos_token = "<MEMOS_TOKEN>" # memos tokens
 default_visibility = "PRIVATE" # memos可用查看的范围 PRIVATE:仅可见当前tokens所属memos， PUBLIC可查看所有公开的memos
 page_size = 10 # 最大返回数量
 user_id = 6 # 账户的id
+
+[group_manage]
+superusers = [123456789, 987654321]
+default_ban_duration = 1800
 
 [get_news]
 base_url = "<BASE_URL>"
