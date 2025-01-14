@@ -21,4 +21,5 @@ dependencies = [
     "langchain-anthropic>=0.3.1",
     "langchain-groq>=0.2.2",
     "yt-dlp>=2024.12.23",
+    "resend>=2.5.1",
 ]
