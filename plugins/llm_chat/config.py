@@ -48,10 +48,15 @@ class ResponseConfig(BaseModel):
     session_busy_message: str = "正在处理其他会话，稍后再试"
     assistant_empty_reply: str = "API空回复"
 
+class SensitiveWordsConfig(BaseModel):
+    """敏感词配置"""
+    input_words: List[str] = []
+
 class Config(BaseModel):
     llm: LLMConfig
     plugin: PluginConfig
     responses: ResponseConfig = ResponseConfig()
+    sensitive_words: SensitiveWordsConfig = SensitiveWordsConfig()
 
     @classmethod
     def load_config(cls) -> "Config":
@@ -91,7 +96,7 @@ class Config(BaseModel):
                 command_start=toml_config["plugin_settings"].get("command_start", "?"),
                 superusers=toml_config["plugin_settings"].get("superusers", ""),
                 media_include_text=toml_config["plugin_settings"].get("media_include_text", True),
-                debug=toml_config["plugin_settings"].get("debug", False),  # 新增读取debug配置
+                debug=toml_config["plugin_settings"].get("debug", False),
                 chunk=ChunkConfig(
                     enable=toml_config.get("chunk", {}).get("enable", False),
                     words=toml_config.get("chunk", {}).get("words", ["||"]),
@@ -108,8 +113,18 @@ class Config(BaseModel):
                 assistant_empty_reply=toml_config["responses"].get("assistant_empty_reply", "API空回复"),
                 session_busy_message=toml_config["responses"].get("session_busy_message", "正在处理其他会话，稍后再试")
             )
+
+            sensitive_words_config = SensitiveWordsConfig(
+                input_words=toml_config.get("sensitive_words", {}).get("input_words", []),
+                output_words=toml_config.get("sensitive_words", {}).get("output_words", [])
+            )
             
-            return cls(llm=llm_config, plugin=plugin_config, responses=responses_config)
+            return cls(
+                llm=llm_config, 
+                plugin=plugin_config, 
+                responses=responses_config,
+                sensitive_words=sensitive_words_config
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to load config.toml: {str(e)}")
 

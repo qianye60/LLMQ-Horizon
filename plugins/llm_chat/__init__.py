@@ -15,7 +15,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 from .graph import build_graph, get_llm, format_messages_for_print
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
 from random import choice
 from .config import Config
 from .utils import (
@@ -30,6 +30,12 @@ import os
 import re
 from .config import plugin_config
 
+def contains_sensitive_words(text: str, word_list: List[str]) -> bool:
+    """检查文本是否包含敏感词"""
+    if not text or not word_list:
+        return False
+    text = text.lower()
+    return any(word.lower() in text for word in word_list)
 
 __plugin_meta__ = PluginMetadata(
     name="LLM Chat",
@@ -245,6 +251,11 @@ async def handle_chat(
     cleaned_message = await remove_trigger_words(message, event)
     if not cleaned_message or cleaned_message.isspace():
         await chat_handler.finish(Message(choice(plugin_config.responses.empty_message_replies)))
+        return
+        
+    # 检查输入是否包含敏感词，包含则直接忽略
+    if contains_sensitive_words(cleaned_message, plugin_config.sensitive_words.input_words):
+        print("输入包含敏感词，忽略处理")
         return
         
     # 确保 llm 已初始化

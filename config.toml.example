@@ -78,6 +78,15 @@ command_start = "/"  # 命令触发前缀，/chat model xxx  , /chat clear， /c
 superusers = "123456789"  # 超级用户的qq
 debug = true
 
+# 敏感词过滤配置
+[sensitive_words]
+# 传入敏感词（用户输入过滤）
+input_words = [
+    "黄色",
+    "赌博"
+]
+
+
 # 消息分段，需要让LLM增加分段关键词，根据关键词分段发送
 [chunk]
 enable = false
