@@ -339,7 +339,7 @@ def llm_code_generator(query: str) -> dict:
     print(f"Generating code for: {query}")
 
     data = {
-        "model": "gemini-exp-1206",
+        "model": model,
         "temperature": 0,
         "messages": [
             {

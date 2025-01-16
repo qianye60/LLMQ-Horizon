@@ -190,4 +190,20 @@ async def build_message_content(
     return message_content
 
 
+def filter_sensitive_words(text: str, word_list: List[str]) -> bool:
+    """检查文本是否包含敏感词
+    
+    Args:
+        text (str): 要检查的文本
+        word_list (List[str]): 敏感词列表
+        
+    Returns:
+        bool: True 如果包含敏感词，False 如果不包含
+    """
+    if not text or not word_list:
+        return False
+    text = text.lower()
+    return any(word.lower() in text for word in word_list)
+
+
 

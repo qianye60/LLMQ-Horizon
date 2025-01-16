@@ -24,18 +24,12 @@ from .utils import (
     get_user_name,
     build_message_content,
     remove_trigger_words,
+    filter_sensitive_words,
 )
 import asyncio
 import os
 import re
 from .config import plugin_config
-
-def contains_sensitive_words(text: str, word_list: List[str]) -> bool:
-    """检查文本是否包含敏感词"""
-    if not text or not word_list:
-        return False
-    text = text.lower()
-    return any(word.lower() in text for word in word_list)
 
 __plugin_meta__ = PluginMetadata(
     name="LLM Chat",
@@ -254,9 +248,16 @@ async def handle_chat(
         return
         
     # 检查输入是否包含敏感词，包含则直接忽略
-    if contains_sensitive_words(cleaned_message, plugin_config.sensitive_words.input_words):
-        print("输入包含敏感词，忽略处理")
+    if filter_sensitive_words(cleaned_message, plugin_config.sensitive_words.input_words):
+        print("主消息包含敏感词，忽略处理")
         return
+        
+    # 检查引用消息是否包含敏感词
+    if event.reply and event.reply.message:
+        reply_text = str(event.reply.message)
+        if filter_sensitive_words(reply_text, plugin_config.sensitive_words.input_words):
+            print("引用消息包含敏感词，忽略处理")
+            return
         
     # 确保 llm 已初始化
     if llm is None:
