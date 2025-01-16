@@ -1,70 +1,81 @@
-# 外部工具列表：
-# - analyze_image: 视觉
-# - code_generation_running: 代码运行，需要部署judge0,参考README
-# - divination: 梅花易数
-# - create_art: 绘画
-# - get_github_trending: github热板
-# - get_weather_data: 天气 https://openweathermap.org/api/one-call-3
-# - jina_fact_checking: jina的测试功能参考jina官网
-# - jina_reader: https://jina.ai/reader/
-# - jina_search: jina的搜索
-# - picture_api: 图片接入api
-# - memos_manage: 备忘录需要部署memos，参考README，https://github.com/usememos/memos
-# - group_manage: 群管理工具(禁言/头衔/群信息)
-# 内置工具:
-# - tavily: 搜索引擎https://tavily.com/
+# 配置说明：
+# 1. 所有标注为OpenAI格式的API均可使用任何兼容OpenAI接口格式的模型服务，如使用one-api中转后的Anthropic Claude、Google Gemini等
+# 2. 请确保在使用前填写所有必需的API密钥和配置项
+# 3. 配置文件使用方法：复制此文件为config.toml并填写相应配置
+# 4. 无用字段留空即可无需删除
+
+# 工具列表及说明：
+# - analyze_image: 图像分析工具，支持图片内容识别和分析
+# - code_generation_running: 代码执行工具，需要部署judge0服务
+# - divination: 梅花易数占卜工具
+# - create_art: AI绘画工具，支持多个主流模型，包括FAL、GLM、Cloudflare、SiliconFlow等
+# - create_video: AI视频生成工具
+# - create_speech: AI语音合成工具，支持多种音色
+# - get_github_trending: GitHub热门项目获取工具
+# - get_weather_data: 天气查询工具，基于OpenWeather API
+# - get_music: 音乐搜索和下载工具，支持网易云音乐等来源
+# - jina_fact_checking: 基于Jina AI的事实核查工具
+# - jina_reader: 网页内容阅读工具
+# - jina_search: 智能搜索工具
+# - picture_api: 图片API集成工具
+# - memos_manage: 备忘录管理工具，需要部署memos服务
+# - group_manage: 群组管理工具，支持禁言/头衔/群信息管理
+# - send_email: 邮件发送工具，支持AI优化邮件内容
+
 [tools]
-builtin = ["tavily_search"]  # 启用内置的tavily搜索工具
+builtin = ["tavily_search"]  # 启用内置工具列表
 enabled = ["get_github_trending", "analyze_image", "group_manage"]  # 启用外部工具列表
 
 [tavily]
-api_key = "<TAVILY_API_KEY>"  # 在此填入你的Tavily API密钥
-max_results = 5  # 搜索结果最大数量
+api_key = "<TAVILY_API_KEY>"  # Tavily搜索引擎API密钥
+max_results = 5  # 单次搜索返回的最大结果数
 
 [analyze_image]
-openai_api_key = "<OPENAI_API_KEY>"  # 在此填入openai格式的视觉模型API密钥
-openai_base_url = "https://api.example.com/v1"  # 视觉模型请求url
-model = "gemini-1.5-pro-latest"  # 使用的模型名称
-img_folder = "img"  # 图像文件存储目录
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的视觉模型API密钥
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "gemini-1.5-pro-latest"  # 视觉模型名称
+img_folder = "img"  # 图片缓存目录
 
 [get_weather_data]
-api_key = "<OPENWEATHER_API_KEY>"  # 在此填入OpenWeather API密钥
+api_key = "<OPENWEATHER_API_KEY>"  # OpenWeather API密钥，用于获取全球天气数据
 
 [jina]
-api_key = "<JINA_API_KEY>"  # 在此填入Jina API密钥
-top_n = 30  # 返回结果的最大数量
-min_length = 10  # 最小文本长度要求
+api_key = "<JINA_API_KEY>"  # Jina AI平台API密钥
+top_n = 30  # 返回结果数量限制
+min_length = 10  # 结果最小文本长度
 
 [divination]
-openai_api_key = "<OPENAI_API_KEY>"  # 在此填入openai格式的密钥
-openai_base_url = "https://api.example.com/v1"  # 模型请求地址
-model = "llama-3.3-70b-instruct"  # 推算用的模型
-random_api_key = "<RANDOM_ORG_API_KEY>" # 在https://api.random.org/dashboard/details获取
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "llama-3.3-70b-instruct"  # 用于卦象推演的大语言模型名称，推荐使用o1这类思考模型
+random_api_key = "<RANDOM_ORG_API_KEY>"  # Random.org API密钥，用于生成真随机数
 
-# "rfv3": "fal",
-# "cv3p": "glm",
-# "sdxlx1": "cloudflare",
-# "sd35": "siliconflow",
-# "flux1s": "siliconflow"
+# 绘画模型对应关系：
+# - rfv3: FAL.ai的ReCraft v3模型
+# - cv3p: 智谱GLM的CogView3模型
+# - sdxlx1: Cloudflare的SDXL模型
+# - sd35: SiliconFlow的SD 3.5模型
+# - flux1s: SiliconFlow的FLUX.1-schnell模型
 [create_art]
-fal_key = "<FAL_API_KEY>"  # 在此填入FAL服务的API密钥
-glm_key = "<GLM_API_KEY>" # 填入glm密钥
-cloudflare_account_id = "<CLOUDFLARE_ACCOUNT_ID>"
-cloudflare_api_token = "<CLOUDFLARE_API_TOKEN>"
-openai_api_key = "<OPENAI_API_KEY>"  # 在此填入OpenAI格式的API密钥
-openai_base_url = "https://api.example.com/v1"  # OpenAI服务的基础URL
-model = "gemini-1.5-pro-latest"  # 中间层提示词优化模型
+fal_key = "<FAL_API_KEY>"  # FAL.ai服务API密钥
+glm_key = "<GLM_API_KEY>"  # 智谱GLM服务API密钥
+cloudflare_account_id = "<CLOUDFLARE_ACCOUNT_ID>"  # Cloudflare账户ID
+cloudflare_api_token = "<CLOUDFLARE_API_TOKEN>"  # Cloudflare API令牌
+siliconflow_key = "<SILICONFLOW_API_KEY>"  # SiliconFlow API密钥
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥，用于提示词优化
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "gemini-1.5-pro-latest"  # 提示词优化模型
 
 [create_video]
-siliconflow_key = "<SILICONFLOW_API_KEY>"
-openai_api_key = "<OPENAI_API_KEY>"
-openai_base_url = "https://api.example.com/v1"
-openai_model = "gemini-1.5-pro-latest"
+siliconflow_key = "<SILICONFLOW_API_KEY>"  # SiliconFlow API密钥
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥，用于提示词优化
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "gemini-1.5-pro-latest"  # 提示词优化模型
 
 # 需要自行去siliconflow传入预置语音然后获取语音uri填入下方映射然后通过提示词把可选音色传递给LLM
 [create_speech]
-siliconflow_key = "<SILICONFLOW_API_KEY>"
-max_text_length = 5
+siliconflow_key = "<SILICONFLOW_API_KEY>"  # SiliconFlow API密钥
+max_text_length = 50  # 单次合成的最大文本长度
 
 [create_speech.voice_mapping]
 shenzi = "speech:shenzi:<VOICE_ID>"
@@ -72,27 +83,35 @@ keli = "speech:keli:<VOICE_ID>"
 xigewen = "speech:xigewen:<VOICE_ID>"
 
 [code_generation_running]
-judge0_url = "https://judge0.example.com"  # Judge0服务的URL
-judge0_api_key = "<JUDGE0_API_KEY>"  # 在此填入Judge0 API密钥
-openai_api_key = "<OPENAI_API_KEY>"
-openai_base_url = "https://api.example.com/v1"
-model = "gemini-exp-1206"
-cpu_time_limit = 5  # CPU时间限制
-wall_time_limit = 8  # 总时间限制
+judge0_url = "https://judge0.example.com"  # Judge0服务URL
+judge0_api_key = "<JUDGE0_API_KEY>"  # Judge0 API密钥
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥，用于代码编写
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "gemini-exp-1206"  # 代码编写模型
+cpu_time_limit = 5  # 代码执行CPU时间限制（秒）
+wall_time_limit = 8  # 代码执行总时间限制（秒）
 
 [picture_api]
-api = "https://picture.netqianye.com/api.php?type=" # 在此填入请求接口,例如:"https://picture.netqianye.com/api.php?type=" type设定:触发工具AI将匹配用户输入,例如:"动漫图片"则type=动漫
+api = "https://picture.netqianye.com/api.php?type="  # 图片API基础URL，type参数将根据用户需求自动匹配
 
 [memos_manage]
-url = "https://memos.example.com" #memos地址
-memos_token = "<MEMOS_TOKEN>" # memos tokens
-default_visibility = "PRIVATE" # memos可用查看的范围 PRIVATE:仅可见当前tokens所属memos， PUBLIC可查看所有公开的memos
-page_size = 10 # 最大返回数量
-user_id = 6 # 账户的id
+url = "https://memos.example.com"  # Memos服务URL
+memos_token = "<MEMOS_TOKEN>"  # Memos访问令牌
+default_visibility = "PRIVATE"  # 备忘录可见性（PRIVATE：仅自己可见，PUBLIC：公开）
+page_size = 10  # 单次查询返回的最大备忘录数量
+user_id = 6  # Memos用户ID
 
 [group_manage]
-superusers = [123456789, 987654321]
-default_ban_duration = 1800
+superusers = [123456789, 987654321]  # 超级管理员QQ号列表
+default_ban_duration = 1800  # 默认禁言时长（秒）
 
 [get_news]
-base_url = "<BASE_URL>"
+base_url = "<BASE_URL>"  # 新闻服务器API基础URL
+
+
+[send_email]
+resend_api_key = "<RESEND_API_KEY>"  # Resend邮件服务API密钥
+from_email = "noreply@example.com"  # 发件人邮箱地址
+openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥，用于邮件内容优化或者编写
+openai_base_url = "https://api.example.com/v1"  # API基础URL
+model = "deepseek-chat"  # 邮件内容优化模型或者编写

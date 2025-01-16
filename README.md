@@ -123,11 +123,13 @@ docker compose down
 </details>
 
 <details>
-<summary>😎 备忘录 (memos_manage - Memos)</summary>
+<summary>📝 备忘录 (memos_manage - Memos)</summary>
 
 [Memos 官方部署教程](https://www.usememos.com/docs/install/container-install)
 
-1. **准备 Ubuntu 22.04 以上环境及 Docker：**
+1. **准备环境：**
+   - Ubuntu 22.04 及以上
+   - Docker 和 Docker Compose
 
 2. **编写 docker-compose.yaml 文件**
 
@@ -143,46 +145,35 @@ docker compose down
         restart: always
     ```
 
-3. **启动 memos**
+3. **启动服务：**
+```bash
+docker compose up -d
+```
 
-    ```shell
-    docker compose up -d
-    ```
+此时就可以在 http://<您的服务器 IP 地址>:5230 访问到 memos，在 memos 中的 Settings 中获取 Tokens。
 
-    此时就可以在 http://<您的服务器 IP 地址>:5230 访问到 memos，在 memos 中的 Settings 中获取 Tokens
+4. **配置 config-tools.toml：**
 
-4. **填写配置文件**
-
-    ```toml
-    [memos_manage]
-    url = "http://your-server:xxx"
-    memos_token = "<填入获取的tokens>"
-    default_visibility = "PRIVATE"
-    page_size = 10
-    user_id = 6
-    ```
-
+```toml
+[memos_manage]
+url = "http://your-server:5230"
+memos_token = "your-memos-token"  # 从 Settings 页面获取的 Token
+default_visibility = "PRIVATE"
+page_size = 10
+user_id = 6
+```
 </details>
 
 <details>
-<summary>🌞 新闻获取 (get_news - SynapseNews)</summary>
+<summary>📰 新闻获取 (get_news - SynapseNews)</summary>
 
 [SynapseNews 项目地址](https://github.com/Mgrsc/SynapseNews)
 
-1. **准备环境**
- - 🐳 Docker Engine 24.0+
- - 🛠️ Docker Compose v2.0+
-
-2. 🐳 Docker Compose 部署
-```shell
+1. **部署步骤：**
+```bash
 git clone https://github.com/Mgrsc/SynapseNews.git
 cd synapsenews
-```
-
-- 创建或修改 config.toml 配置文件
-- 根据需要调整 docker-compose.yaml
-
-```shell
+# 配置 config.toml
 docker compose up -d
 ```
 </details>
@@ -198,11 +189,10 @@ docker compose up -d
 | `/chat up`                | 开启对话功能                     |
 | `/chat chunk <true/false>` | 开关分段发送                     |
 
-
-## 🦊提示词编写技巧
+## 🦊 提示词编写技巧
 
 <details>
-<summary>1.基本原则</summary>
+<summary>1. 基本原则</summary>
 
 - 明确指令: 使用命令式语言明确陈述用户的需求,确保LLM能精确理解。
 - 提供参考例子/文本：提供详尽例子和信息,构成Few-shot-Prompt,帮助LLM加强意图的理解。
@@ -210,8 +200,9 @@ docker compose up -d
 - 输出控制: 指定输出格式、语言风格等要求,确保LLM生成符合用户期望的输出。
 - 布局优化: 精心安排Prompt的排版布局,便于LLM理解。
 </details>
+
 <details>
-<summary>2.其他技巧</summary>
+<summary>2. 其他技巧</summary>
 
 - 列出可用工具，对于复杂工具进行解释和要求
   ```
@@ -249,8 +240,15 @@ docker compose up -d
   ```
 </details>
 
-## ❗ 常见问题
+## 🤝 贡献指南
 
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
+
+## 🤖 常见问题
 所有tools均通过测试，如有问题请参考下面检查。
 
 <details>
@@ -300,9 +298,6 @@ docker compose up -d
 ## 📄 许可证
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
-
-本项目采用 [MIT 许可证](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE)。
-
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 Copyright © 2024 Bitfennec.
-
 ---
