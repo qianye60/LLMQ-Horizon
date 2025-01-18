@@ -4,11 +4,11 @@
 
 # 🤖 LLMQ-Horizon QQ Chatbot
 
-**Intelligenter QQ-Bot basierend auf NoneBot2 und LangGraph, unterstützt Multimodell-Dialoge, Tool-Aufrufe und Sitzungsmanagement**
+**Intelligenter QQ-Bot basierend auf NoneBot2 und LangGraph, unterstützt Mehrfachmodell-Dialoge, Tool-Aufrufe und Sitzungsverwaltung**
 
 <br>
 
-**Tools sind alle mit Function-Calling geschrieben, verwenden keine Plugins, siehe [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
+**Die Tools sind alle mit Function-calling geschrieben, ohne Plugins, siehe [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
 
 <br>
 
@@ -26,23 +26,25 @@
 
 ## ✨ Hauptmerkmale
 
--   **🔌 Umfangreiche Tool-Integration:** Codeausführung, Wetterabfrage, Wahrsagerei, Zeichnen usw.
--   **🤖 Unterstützung für verschiedene große Modelle:** OpenAI, Google Gemini, Groq usw.
--   **💬 Umfangreiches Dialogmanagement:** Gruppenchat/Privatchat, mehrfache Dialoge, Sitzungsisolation
+-   **🔌 Umfangreiche Tool-Integration:** Codeausführung, Wetterabfrage, Wahrsagerei, Malen usw.
+-   **🤖 Unterstützung mehrerer großer Modelle:** OpenAI, Google Gemini, Groq usw.
+-   **💬 Ausgereiftes Dialogmanagement:** Gruppenchat/Privatchat, Mehrfachdialoge, Sitzungsisolierung
 -   **🎯 Flexible Auslösemethoden:** @, Schlüsselwörter, Befehlspräfix
 -   **🎨 Multimedia-Fähigkeiten:** Bildanalyse, Audio- und Videoverarbeitung
--   **⚡ Automatische Sitzungsverwaltung:** Zeitüberschreitungsbereinigung, Parallelitätskontrolle
--   **🦖 Starke Erweiterbarkeit:** Eigene Tools können geschrieben werden, Tools können nonebot steuern
+-   **⚡ Automatische Sitzungsverwaltung:** Timeout-Bereinigung, Parallelitätskontrolle
+-   **🦖 Starke Erweiterbarkeit:** Eigene Tools können geschrieben werden, Tools können verwendet werden, um nonebot zu steuern
 
 ---
 
 ## 🚀 Schnellstart
 
-### 1. Umgebungsvorbereitung für die Bereitstellung
+### 1. Vorbereitung der Einsatzumgebung
 
 -   Docker und Docker Compose
 -   Stabile Netzwerkumgebung
 -   Empfohlenes System: Ubuntu 22.04 und höher, Debian 11 und höher
+
+> Hinweis: Wenn Sie das Deepseek-Modell mit Tools verwenden, sollten Sie nicht mehr als 5 Tools aktivieren und die Eingabeaufforderungen so kurz wie möglich halten, da DS sonst Tools unaufhörlich aufruft und Sie damit überflutet, oder gar keine Tools aufruft und nur so tut als ob.
 
 ### 2. Installationsschritte
 
@@ -55,7 +57,7 @@ cd LLMQ-Horizon
 cp config-tools.toml.example config-tools.toml
 cp config.toml.example config.toml
 cd napcat/config/
-mv onebot11_qq.json onebot11_<deineQQ>.json  # Durch tatsächliche QQ-Nummer ersetzen
+mv onebot11_qq.json onebot11_<Ihre QQ>.json  # Durch tatsächliche QQ-Nummer ersetzen
 
 # 3. Konfiguration ändern (siehe Kommentare in den Konfigurationsdateien)
 vim config.toml
@@ -64,13 +66,13 @@ vim config-tools.toml
 # 4. Dienst starten
 docker compose up -d
 
-# 5. QR-Code scannen und anmelden
+# 5. QR-Code scannen zum Anmelden
 docker compose logs -f
 
 # LLMQ-Dienst neu starten
 docker compose restart llmq
 
-# Alle Dienste stoppen
+# Alle Dienste beenden
 docker compose down
 ```
 
@@ -79,7 +81,7 @@ docker compose down
 <details>
 <summary>💻 Codeausführung (Code Runner - Judge0)</summary>
 
-[Judge0 Offizielle Bereitstellungsanleitung](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
+[Offizielle Judge0-Bereitstellungsanleitung](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
 
 1. **Ubuntu 22.04 oder höhere Umgebung und Docker vorbereiten, cgroup v1 konfigurieren:**
 
@@ -108,7 +110,7 @@ docker compose down
     sleep 5s
     ```
 
-    Ihre Judge0 CE v1.13.1-Instanz ist jetzt gestartet und läuft; besuchen Sie http://<Ihre Server-IP-Adresse>:2358/docs, um die Dokumentation zu erhalten.
+    Ihre Judge0 CE v1.13.1 Instanz ist jetzt gestartet und läuft; Zugriff auf die Dokumentation erhalten Sie unter http://<Ihre Server-IP-Adresse>:2358/docs.
 
 3. **config-tools.toml konfigurieren:**
 
@@ -121,13 +123,15 @@ docker compose down
 </details>
 
 <details>
-<summary>😎 Notizen (memos_manage - Memos)</summary>
+<summary>📝 Memo (memos_manage - Memos)</summary>
 
-[Memos Offizielle Bereitstellungsanleitung](https://www.usememos.com/docs/install/container-install)
+[Offizielle Memos-Bereitstellungsanleitung](https://www.usememos.com/docs/install/container-install)
 
-1. **Ubuntu 22.04 oder höhere Umgebung und Docker vorbereiten:**
+1. **Umgebung vorbereiten:**
+   - Ubuntu 22.04 und höher
+   - Docker und Docker Compose
 
-2. **docker-compose.yaml-Datei erstellen**
+2. **docker-compose.yaml-Datei schreiben**
 
     ```yaml
     services:
@@ -141,116 +145,135 @@ docker compose down
         restart: always
     ```
 
-3. **Memos starten**
+3. **Dienst starten:**
+```bash
+docker compose up -d
+```
 
-    ```shell
-    docker compose up -d
-    ```
+Jetzt können Sie unter http://<Ihre Server-IP-Adresse>:5230 auf Memos zugreifen und in den Einstellungen von Memos Tokens erhalten.
 
-    Sie können nun unter http://<Ihre Server-IP-Adresse>:5230 auf Memos zugreifen und die Token in den Einstellungen von Memos abrufen.
+4. **config-tools.toml konfigurieren:**
 
-4. **Konfigurationsdatei ausfüllen**
+```toml
+[memos_manage]
+url = "http://your-server:5230"
+memos_token = "your-memos-token"  # Token von der Einstellungsseite
+default_visibility = "PRIVATE"
+page_size = 10
+user_id = 6
+```
+</details>
 
-    ```toml
-    [memos]
-    url = "http://your-server:xxx"
-    memos_token = "<füge die abgerufenen Token ein>"
-    default_visibility = "PRIVATE"
-    page_size = 10
-    user_id = 6
-    ```
+<details>
+<summary>📰 Nachrichtenerfassung (get_news - SynapseNews)</summary>
 
+[SynapseNews Projektadresse](https://github.com/Mgrsc/SynapseNews)
+
+1. **Bereitstellungsschritte:**
+```bash
+git clone https://github.com/Mgrsc/SynapseNews.git
+cd synapsenews
+# Konfigurieren von config.toml
+docker compose up -d
+```
 </details>
 
 ## 📝 Befehlsbeschreibung
 
-| Befehl                      | Beschreibung                                |
-| :------------------------ | :------------------------------------------ |
-| `/chat model <Modellname>`   | Dialogmodell wechseln                         |
-| `/chat clear`             | Alle Sitzungen löschen                       |
-| `/chat group <true/false>` | Gruppenchat-Isolation ein-/ausschalten      |
-| `/chat down`              | Dialogfunktion deaktivieren                  |
-| `/chat up`                | Dialogfunktion aktivieren                    |
-| `/chat chunk <true/false>` | Aktivieren/Deaktivieren von Nachrichten in Teilstücken |
+| Befehl                      | Beschreibung                             |
+| :------------------------ | :--------------------------------------- |
+| `/chat model <Modellname>`   | Dialogmodell wechseln                    |
+| `/chat clear`             | Alle Sitzungen löschen                    |
+| `/chat group <true/false>` | Gruppenchat-Isolierung ein-/ausschalten |
+| `/chat down`              | Dialogfunktion deaktivieren               |
+| `/chat up`                | Dialogfunktion aktivieren                |
+| `/chat chunk <true/false>` | Segmentweises Senden ein-/ausschalten     |
 
-
-## 🦊 Tipps zur Prompt-Erstellung
+## 🦊 Tipps zum Schreiben von Prompts
 
 <details>
 <summary>1. Grundprinzipien</summary>
 
--   Klare Anweisungen: Verwenden Sie eine imperative Sprache, um die Bedürfnisse der Benutzer klar zu formulieren und sicherzustellen, dass LLM sie präzise versteht.
--   Referenzbeispiele/Text bereitstellen: Geben Sie detaillierte Beispiele und Informationen, um einen Few-Shot-Prompt zu erstellen, der LLM hilft, das Verständnis der Absicht zu verbessern.
--   Strukturierter Ausdruck: Verwenden Sie Markierungssymbole (wie XML-Tags, dreifache Anführungszeichen, Markdown), um die Lesbarkeit zu verbessern und Prompts klarer auszudrücken.
--   Ausgabesteuerung: Legen Sie Ausgabeformate, Sprachstile und andere Anforderungen fest, um sicherzustellen, dass LLM eine Ausgabe generiert, die den Erwartungen der Benutzer entspricht.
--   Layoutoptimierung: Ordnen Sie das Layout des Prompts sorgfältig an, um das Verständnis von LLM zu erleichtern.
+- Klare Anweisungen: Verwenden Sie eine imperative Sprache, um die Bedürfnisse des Benutzers klar zu formulieren und sicherzustellen, dass das LLM sie genau versteht.
+- Geben Sie Referenzbeispiele/-texte an: Stellen Sie detaillierte Beispiele und Informationen bereit, um einen Few-Shot-Prompt zu erstellen, der dem LLM hilft, das Konzept besser zu verstehen.
+- Strukturierte Ausdrücke: Verwenden Sie Markierungssymbole (z. B. XML-Tags, dreifache Anführungszeichen, Markdown), um die Lesbarkeit zu verbessern und die Prompts klar auszudrücken.
+- Ausgabesteuerung: Legen Sie Ausgabeformate, Sprachstile und andere Anforderungen fest, um sicherzustellen, dass das LLM eine Ausgabe generiert, die den Erwartungen des Benutzers entspricht.
+- Layout-Optimierung: Ordnen Sie das Layout des Prompts sorgfältig an, um das Verständnis des LLM zu erleichtern.
 </details>
-<details>
-<summary>2. Andere Tipps</summary>
 
--   Listen Sie die verfügbaren Tools auf und geben Sie Erklärungen und Anforderungen für komplexe Tools an.
+<details>
+<summary>2. Weitere Tipps</summary>
+
+- Listen Sie verfügbare Tools auf und erläutern und fordern Sie komplexe Tools an
   ```
   create_speech generiert Sprache
-    - maximal 40 Wörter, keine Emojis erlaubt
+    - Maximal 40 Zeichen, keine Emojis erlaubt
     - Unterstützte Sprachen: Chinesisch, Englisch, Japanisch, Deutsch, Französisch, Spanisch, Koreanisch, Arabisch, Russisch, Niederländisch, Italienisch, Polnisch, Portugiesisch
-    - Verfügbare Stimmzuordnungen:
+    - Verfügbare Stimmenzuordnungen:
         Klee = keli
-        Sigewen = xigewen
+        Sigewinne = xigewen
         Yae Miko = shenzi
         Ding Zhen = dingzhen
         Lei Jun = leijun
-        Lazy Goat = lanyangyang
+        Lazy Sheep = lanyangyang
   ```
--   Fordern Sie die Zusendung der von Tool zurückgegebenen file://-Adresse an.
+- Fordern Sie an, die von Tools zurückgegebenen file://-Adressen zu senden
   ```
-    Das Zeichnen, der Abruf von Musik und TTS müssen die zurückgegebenen Links oder Dateipfade an den Benutzer senden.
+    Das Zeichnen, Abrufen von Musik und TTS müssen den zurückgegebenen Link oder den Dateipfad an den Benutzer senden
   ```
--   Beispiel für die Formatierung des von Tool zurückgegebenen Inhalts
+- Beispiel für das Layout der von Tools zurückgegebenen Inhalte
   ```
-      # Beispiel für die Formatierungsoptimierung von Tool-Rückgabeinhalten
-    Beispiel für das Format der von get_weather_data zurückgegebenen Daten:
+      # Beispiel für die Layoutoptimierung der von Tools zurückgegebenen Inhalte
+    Beispiel für die Formatierung der von get_weather_data zurückgegebenen Daten:
     *   A: Sag mir, wie das Wetter heute in Changsha ist
-        T: Ruft das Tool `get_weather_data` ab, um das Wetter abzurufen
+        T: Rufe das Tool `get_weather_data` auf, um das Wetter abzurufen
         Q:
-        🌤️ {Ort} Wetter
+        🌤️ Wetter in {Ort}
         🌅 Sonnenaufgang und Sonnenuntergang: {xx:xx}-{xx:xx ohne Jahr}
-        ⏱️   Zeit: {Zeit}
+        ⏱️   Uhrzeit: {Zeit}
         🌡️ Temperatur: {Temperatur}℃
         💧 Luftfeuchtigkeit: {Luftfeuchtigkeit}%
         🧣 Gefühlte Temperatur: {Gefühlte Temperatur}℃
-        🍃 Windrichtung und Windgeschwindigkeit: {Windrichtung}-{Windgeschwindigkeit}
-        📋 Gesamtstatus: {Gesamtanalyse}
-        Baby, zieh dich warm an, wenn du ausgehst~ sei vorsichtig vor einer Erkältung
+        🍃 Windrichtung und -geschwindigkeit: {Windrichtung}-{Windgeschwindigkeit}
+        📋 Gesamtsituation: {Gesamtanalyse}
+        Baby, zieh dich warm an, wenn du rausgehst~ Pass auf, dass du dich nicht erkältest
   ```
 </details>
 
-## ❗ Häufige Fragen
+## 🤝 Leitfaden für Beiträge
 
-Alle Tools wurden getestet. Wenn es Probleme gibt, beziehen Sie sich bitte auf die folgenden Überprüfungen.
+1. Forken Sie dieses Repository
+2. Erstellen Sie Ihren Feature-Branch (`git checkout -b feature/AmazingFeature`)
+3. Übernehmen Sie Ihre Änderungen (`git commit -m 'Add some AmazingFeature'`)
+4. Pushen Sie zum Branch (`git push origin feature/AmazingFeature`)
+5. Öffnen Sie eine Pull-Anfrage
+
+## 🤖 Häufig gestellte Fragen
+Alle Tools wurden getestet, überprüfen Sie bitte Folgendes, wenn Sie Probleme haben.
 
 <details>
-<summary>1. Anmeldefehler</summary>
+<summary>1. Anmeldung fehlgeschlagen</summary>
 
--   Überprüfen Sie, ob die QQ-Nummernkonfiguration korrekt ist.
--   Bestätigen Sie das Format der napcat-Konfigurationsdatei.
--   Überprüfen Sie die napcat-Containerprotokolle, um das Problem zu beheben.
+-   Überprüfen Sie, ob die QQ-Nummer korrekt konfiguriert ist
+-   Bestätigen Sie das Format der napcat-Konfigurationsdatei
+-   Überprüfen Sie die napcat-Containerprotokolle, um das Problem zu beheben
 
 </details>
 
 <details>
-<summary>2. Tool-Aufruf fehlgeschlagen</summary>
+<summary>2. Toolaufruf fehlgeschlagen</summary>
 
--   Bestätigen Sie, dass das Modell die Funktion zum Aufrufen von Funktionen unterstützt.
--   Überprüfen Sie die zugehörigen API-Schlüsselkonfigurationen.
--   Überprüfen Sie die LLMQ-Containerprotokolle, um den Fehler zu lokalisieren.
--   Fügen Sie [LangSmith](https://smith.langchain.com/) im Docker-Container hinzu, um zu debuggen.
+-   Bestätigen Sie, dass das Modell die Fähigkeit zum Funktionsaufruf unterstützt
+-   Überprüfen Sie die Konfiguration der zugehörigen API-Schlüssel
+-   Überprüfen Sie die LLMQ-Containerprotokolle, um Fehler zu lokalisieren
+-   Fügen Sie [LangSmith](https://smith.langchain.com/) im Docker-Container zum Debuggen hinzu
 
     ```yaml
     environment:
       - LANGCHAIN_TRACING_V2=true
       - LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
-      - LANGCHAIN_API_KEY="<dein_api_schlüssel>"
-      - LANGCHAIN_PROJECT="<dein_projektname>"
+      - LANGCHAIN_API_KEY="<your_api_key>"
+      - LANGCHAIN_PROJECT="<your_project_name>"
     ```
 
 </details>
@@ -258,12 +281,12 @@ Alle Tools wurden getestet. Wenn es Probleme gibt, beziehen Sie sich bitte auf d
 <details>
 <summary>3. Andere Probleme</summary>
 
--   Bei anderen Problemen treten Sie bitte der QQ-Gruppe zur Diskussion bei.
+-   Bei anderen Problemen treten Sie bitte der QQ-Gruppe zur Diskussion bei
     ![qrcode](static/qrcode.jpg)
 
 </details>
 
-## 🔗 Zugehörige Projekte
+## 🔗 Verwandte Projekte
 
 -   [NoneBot2](https://github.com/nonebot/nonebot2)
 -   [LangGraph](https://github.com/langchain-ai/langgraph)
@@ -275,9 +298,7 @@ Alle Tools wurden getestet. Wenn es Probleme gibt, beziehen Sie sich bitte auf d
 ## 📄 Lizenz
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
-
-Dieses Projekt ist unter der [MIT-Lizenz](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE) lizenziert.
-
+Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe [LICENSE](LICENSE) Datei für Details.
 Copyright © 2024 Bitfennec.
-
 ---
+</div>

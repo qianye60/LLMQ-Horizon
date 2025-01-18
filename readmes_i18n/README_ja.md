@@ -4,11 +4,11 @@
 
 # 🤖 LLMQ-Horizon QQ チャットボット
 
-**NoneBot2とLangGraphをベースにしたインテリジェントなQQボットで、多モデル対話、ツール呼び出し、セッション管理をサポート**
+**NoneBot2とLangGraphをベースにしたインテリジェントなQQボットで、マルチモデル対話、ツール呼び出し、会話管理をサポート**
 
 <br>
 
-**ツールはすべて Function-calling で記述されており、プラグインは使用していません。[OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) 、[LangChain Tools](https://python.langchain.com/docs/how_to/#tools) を参照してください。**
+**ツールはすべてFunction-callingで記述されており、プラグインは使用していません。[OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools) を参照してください。**
 
 <br>
 
@@ -28,26 +28,28 @@
 
 -   **🔌 豊富なツール統合：** コード実行、天気予報、占い、絵画など
 -   **🤖 複数の大規模モデルをサポート：** OpenAI、Google Gemini、Groqなど
--   **💬 完璧な対話管理：** グループチャット/プライベートチャット、複数回の対話、セッション分離
--   **🎯 柔軟なトリガー方式：** @、キーワード、コマンドプレフィックス
+-   **💬 充実した会話管理：** グループチャット/プライベートチャット、複数回対話、会話隔離
+-   **🎯 柔軟なトリガー方法：** @、キーワード、コマンドプレフィックス
 -   **🎨 マルチメディア機能：** 画像分析、音声・動画処理
--   **⚡ 自動セッション管理：** タイムアウトクリア、同時実行制御
--   **🦖 強力な拡張性：** 独自のツールを作成可能、ツールでnonebotを制御可能
+-   **⚡ 自動会話管理：** タイムアウトクリア、同時実行制御
+-   **🦖 強力な拡張性：** 独自のツール作成、ツールによるNoneBot制御
 
 ---
 
 ## 🚀 クイックスタート
 
-### 1. 展開環境の準備
+### 1. 環境構築の準備
 
 -   DockerとDocker Compose
 -   安定したネットワーク環境
--   推奨システム：Ubuntu 22.04 以上、Debian 11以上
+-   推奨システム：Ubuntu 22.04以上、Debian 11以上
+
+> 注意：deepseekモデルでツールを有効にする場合は、5つを超えないようにしてください。また、プロンプトはできるだけ少なくしてください。そうしないと、dsがツールを大量に呼び出して使い果たしてしまうか、ツールをまったく使用しなくなる可能性があります。
 
 ### 2. インストール手順
 
 ```bash
-# 1. プロジェクトをクローン
+# 1. プロジェクトのクローン
 git clone https://github.com/Mgrsc/LLMQ-Horizon.git
 cd LLMQ-Horizon
 
@@ -57,7 +59,7 @@ cp config.toml.example config.toml
 cd napcat/config/
 mv onebot11_qq.json onebot11_<あなたのQQ>.json  # 実際のQQ番号に置き換える
 
-# 3. 設定の変更（設定ファイルのコメントを参照して変更）
+# 3. 設定の変更（設定ファイルのコメントを参考にして変更してください）
 vim config.toml
 vim config-tools.toml
 
@@ -67,10 +69,10 @@ docker compose up -d
 # 5. QRコードログイン
 docker compose logs -f
 
-# LLMQサービスを再起動
+# LLMQサービスの再起動
 docker compose restart llmq
 
-# すべてのサービスを停止
+# すべてのサービスの停止
 docker compose down
 ```
 
@@ -81,7 +83,7 @@ docker compose down
 
 [Judge0 公式デプロイチュートリアル](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
 
-1. **Ubuntu 22.04以上の環境とDockerを準備し、cgroup v1を設定します：**
+1.  **Ubuntu 22.04以上の環境とDockerを準備し、cgroup v1を設定：**
 
     ```bash
     sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
@@ -89,28 +91,28 @@ docker compose down
     sudo reboot
     ```
 
-2. **Judge0をデプロイ：**
+2.  **Judge0をデプロイ：**
 
     ```bash
     wget https://github.com/judge0/judge0/releases/download/v1.13.1/judge0-v1.13.1.zip
     unzip judge0-v1.13.1.zip
     cd judge0-v1.13.1
 
-    # 2つのパスワードを生成し、設定します。
+    # 2つのパスワードを生成し、設定
     openssl rand -hex 32
 
     # 生成したパスワードを使用して、judge0.confファイルのREDIS_PASSWORDとPOSTGRES_PASSWORD変数を更新します。
 
-    # サービスを起動します。
+    # サービスの起動
     docker-compose up -d db redis
     sleep 10s
     docker-compose up -d
     sleep 5s
     ```
 
-    Judge0 CE v1.13.1インスタンスが起動しました。ドキュメントは http://<あなたのサーバーIPアドレス>:2358/docs で参照できます。
+    これで、Judge0 CE v1.13.1インスタンスが起動し、実行されます。http://<あなたのサーバーIPアドレス>:2358/docsにアクセスしてドキュメントを参照してください。
 
-3.  **config-tools.toml を設定します：**
+3.  **config-tools.tomlの設定：**
 
     ```toml
     [code_generation_running]
@@ -121,13 +123,15 @@ docker compose down
 </details>
 
 <details>
-<summary>😎 メモ (memos_manage - Memos)</summary>
+<summary>📝 メモ (memos_manage - Memos)</summary>
 
 [Memos 公式デプロイチュートリアル](https://www.usememos.com/docs/install/container-install)
 
-1. **Ubuntu 22.04以上の環境とDockerを準備します：**
+1.  **環境の準備：**
+    - Ubuntu 22.04以上
+    - DockerとDocker Compose
 
-2. **docker-compose.yaml ファイルを作成します**
+2.  **docker-compose.yamlファイルの作成**
 
     ```yaml
     services:
@@ -141,89 +145,112 @@ docker compose down
         restart: always
     ```
 
-3. **memosを起動します**
+3.  **サービスの起動：**
 
-    ```shell
-    docker compose up -d
-    ```
+```bash
+docker compose up -d
+```
 
-    これで http://<あなたのサーバーIPアドレス>:5230 で memos にアクセスできます。memos の設定でトークンを取得します。
+    これで http://<あなたのサーバーIPアドレス>:5230 でmemosにアクセスできるようになり、memosの設定でトークンを取得できます。
 
-4. **設定ファイルを記入します**
+4.  **config-tools.tomlの設定：**
 
-    ```toml
-    [memos]
-    url = "http://your-server:xxx"
-    memos_token = "<取得したトークンを入力>"
-    default_visibility = "PRIVATE"
-    page_size = 10
-    user_id = 6
-    ```
-
+```toml
+[memos_manage]
+url = "http://your-server:5230"
+memos_token = "your-memos-token"  # 設定ページから取得したトークン
+default_visibility = "PRIVATE"
+page_size = 10
+user_id = 6
+```
 </details>
-
-## 📝 コマンド説明
-
-| コマンド                        | 説明                               |
-| :------------------------------ | :--------------------------------- |
-| `/chat model <モデル名>`      | 対話モデルを切り替える               |
-| `/chat clear`                   | すべてのセッションをクリアする         |
-| `/chat group <true/false>`     | グループチャットの分離を切り替える       |
-| `/chat down`                    | 対話機能をオフにする                 |
-| `/chat up`                      | 対話機能をオンにする                 |
-| `/chat chunk <true/false>`     | 分割送信を切り替える                 |
-
-## 🦊プロンプト作成のヒント
 
 <details>
-<summary>1.基本原則</summary>
+<summary>📰 ニュース取得 (get_news - SynapseNews)</summary>
 
-- 明確な指示: 命令形を使い、ユーザーの要求を明確に伝えることで、LLMが正確に理解できるようにします。
-- 参考例/テキストの提供: 詳細な例や情報を提供し、Few-shot-Promptを構成することで、LLMが意図をよりよく理解できるようにします。
-- 構造化された表現: XMLタグ、三重引用符、Markdownなどのマークを使用して可読性を高め、プロンプトを明確に表現します。
-- 出力制御: 出力形式や言語スタイルなどの要件を指定し、LLMがユーザーの期待に沿った出力を生成できるようにします。
-- レイアウトの最適化: プロンプトのレイアウトを慎重に調整し、LLMが理解しやすくします。
+[SynapseNews プロジェクトアドレス](https://github.com/Mgrsc/SynapseNews)
+
+1.  **デプロイ手順：**
+
+```bash
+git clone https://github.com/Mgrsc/SynapseNews.git
+cd synapsenews
+# config.tomlの設定
+docker compose up -d
+```
 </details>
+
+## 📝 コマンドの説明
+
+| コマンド                   | 説明                               |
+| :------------------------- | :--------------------------------- |
+| `/chat model <モデル名>`    | 会話モデルの切り替え               |
+| `/chat clear`              | すべての会話をクリア               |
+| `/chat group <true/false>`  | グループチャット隔離のオン/オフ     |
+| `/chat down`               | 会話機能の停止                     |
+| `/chat up`                 | 会話機能の開始                     |
+| `/chat chunk <true/false>` | 分割送信のオン/オフ               |
+
+## 🦊 プロンプト作成のヒント
+
 <details>
-<summary>2.その他のヒント</summary>
+<summary>1. 基本原則</summary>
 
-- 利用可能なツールをリストし、複雑なツールについては説明と要件を示します。
-  ```
-  create_speechで音声を生成
-    - 最大40文字、絵文字不可
-    - 対応言語：中国語、英語、日本語、ドイツ語、フランス語、スペイン語、韓国語、アラビア語、ロシア語、オランダ語、イタリア語、ポーランド語、ポルトガル語
-    - 使用可能な音色：
-        可莉 = keli
-        西格雯 = xigewen
-        神子 = shenzi
-        丁真 = dingzhen
-        雷军 = leijun
-        懒羊羊 = lanyangyang
-  ```
-- ツールから返されるfile://アドレスを要求します。
-  ```
-    絵を描く、音楽を取得する、ttsの場合は、返されたリンクまたはファイルパスのアドレスをユーザーに送信する必要があります。
-  ```
-- ツールから返される内容のレイアウト例
-  ```
-      # ツールから返される内容のレイアウト最適化例
-    get_weather_dataから返されたデータ形式の例：
-    *   A: 今日の長沙の天気を教えて
-        T: ツール`get_weather_data`を呼び出して天気を取得
-        Q:
-        🌤️ {場所}の天気
-        🌅 日の出日の入り: {xx:xx}-{xx:xx年なし}
-        ⏱️   時間: {時間}
-        🌡️ 温度: {温度}℃
-        💧 湿度: {湿度}%
-        🧣 体感温度: {体感温度}℃
-        🍃 風向風速: {風向}-{風速}
-        📋 総合状況: {総合分析}
-        赤ちゃんは外出する際は服をたくさん着せてね〜風邪に気を付けて
-  ```
+-   明確な指示：命令形の言葉を使用して、ユーザーのニーズを明確に述べ、LLMが正確に理解できるようにします。
+-   参考例/テキストの提供：詳細な例と情報を提供し、Few-shot-Promptを構成し、LLMが意図の理解を強化するのを助けます。
+-   構造化された表現：マーク記号（XMLタグ、トリプルクォート、Markdownなど）を使用して可読性を高め、プロンプトの表現を明確にします。
+-   出力制御：出力形式、言語スタイルなどの要件を指定して、LLMがユーザーの期待に合った出力を生成できるようにします。
+-   レイアウトの最適化：LLMが理解しやすいように、プロンプトのレイアウトを慎重に調整します。
 </details>
 
-## ❗ よくある質問
+<details>
+<summary>2. その他のヒント</summary>
+
+-   利用可能なツールをリストし、複雑なツールについては説明と要件を提供します
+    ```
+    create_speechで音声を生成する
+      - 最大40文字、絵文字は不可
+      - サポート言語：中国語、英語、日本語、ドイツ語、フランス語、スペイン語、韓国語、アラビア語、ロシア語、オランダ語、イタリア語、ポーランド語、ポルトガル語
+      - 使用可能な音色のマッピング:
+          クレー = keli
+          シグウィン = xigewen
+          神子 = shenzi
+          ディン・ジェン = dingzhen
+          レイ・ジュン = leijun
+          レイジーシープ = lanyangyang
+    ```
+-   ツールから返されたfile://アドレスを送信するように要求します
+    ```
+      絵を描く、音楽を取得する、ttsは、返されたリンクまたはファイルパスアドレスをユーザーに送信する必要があります
+    ```
+-   ツールから返されたコンテンツのレイアウト例
+    ```
+        # ツールの返されたコンテンツレイアウトの最適化例
+      get_weather_dataで返されたデータのフォーマット例：
+      *   A: 今日の長沙の天気を教えて
+          T: ツール`get_weather_data`を呼び出して天気を取得します
+          Q:
+          🌤️ {場所}の天気
+          🌅 日の出と日の入り: {xx:xx}-{xx:xx年を除く}
+          ⏱️   時間: {時間}
+          🌡️ 温度: {温度}℃
+          💧 湿度: {湿度}%
+          🧣 体感温度: {体感温度}℃
+          🍃 風向風速: {風向}-{風速}
+          📋 総合状況: {総合分析}
+          赤ちゃんは外出時に服を多く着てくださいね〜風邪に気をつけて
+    ```
+</details>
+
+## 🤝 貢献ガイド
+
+1.  このリポジトリをフォークする
+2.  機能ブランチを作成する (`git checkout -b feature/AmazingFeature`)
+3.  変更をコミットする (`git commit -m 'Add some AmazingFeature'`)
+4.  ブランチをプッシュする (`git push origin feature/AmazingFeature`)
+5.  プルリクエストを開く
+
+## 🤖 よくある質問
 
 すべてのツールはテスト済みです。問題がある場合は、以下を参照して確認してください。
 
@@ -231,18 +258,18 @@ docker compose down
 <summary>1. ログイン失敗</summary>
 
 -   QQ番号の設定が正しいか確認してください
--   napcatの設定ファイル形式を確認してください
--   napcatコンテナのログを見て問題を特定してください
+-   napcat設定ファイルの形式を確認してください
+-   napcatコンテナログを確認して問題を解決してください
 
 </details>
 
 <details>
-<summary>2. ツール呼び出し失敗</summary>
+<summary>2. ツールの呼び出し失敗</summary>
 
--   モデルが関数呼び出し機能をサポートしているか確認してください
+-   モデルが関数呼び出し機能をサポートしていることを確認してください
 -   関連するAPIキー設定を確認してください
--   LLMQコンテナのログを見てエラーを特定してください
--   [LangSmith](https://smith.langchain.com/) をDockerコンテナに追加してデバッグします
+-   LLMQコンテナログを確認してエラーを特定してください
+-   dockerコンテナに[LangSmith](https://smith.langchain.com/)を追加してデバッグしてください
 
     ```yaml
     environment:
@@ -257,7 +284,7 @@ docker compose down
 <details>
 <summary>3. その他の問題</summary>
 
--   その他の問題はQQグループでご相談ください
+-   その他の問題については、QQグループで話し合ってください
     ![qrcode](static/qrcode.jpg)
 
 </details>
@@ -274,9 +301,6 @@ docker compose down
 ## 📄 ライセンス
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
-
-このプロジェクトは [MIT ライセンス](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE) の下でライセンスされています。
-
+このプロジェクトは、MITライセンスの下で配布されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
 Copyright © 2024 Bitfennec.
-
 ---

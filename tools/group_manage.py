@@ -1,9 +1,30 @@
+import re
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, ActionFailed
 from nonebot import get_bot, logger
 from langchain_core.tools import tool
 from .config import config
 
 group_manage_config = config.get('group_manage', {})
+
+
+def parse_duration(duration_str: str) -> int:
+    """将时间字符串转换为秒数"""
+    if duration_str.isdigit():
+        return int(duration_str)
+    
+    try:
+        # 匹配 DD:HH:MM 格式
+        pattern = r'^(\d{2}):(\d{2}):(\d{2})$'
+        match = re.match(pattern, duration_str)
+        if match:
+            days, hours, minutes = map(int, match.groups())
+            total_seconds = days * 86400 + hours * 3600 + minutes * 60
+            return total_seconds
+    except Exception as e:
+        logger.error(f"时间格式解析失败: {e}")
+    
+    # 如果无法解析，返回默认时长
+    return group_manage_config.get("default_ban_duration", 1800)
 
 
 async def check_permission(group_id: int, operator_id: int, target_id: int) -> tuple[bool, str]:
@@ -84,17 +105,14 @@ async def set_group_special_title(group_id: int, operator_id: int, user_id: int,
         return f"设置群头衔失败: {e.info}"
 
 
-async def ban_group_member(group_id: int, operator_id: int, user_id: int, duration: int = None) -> str:
+async def ban_group_member(group_id: int, operator_id: int, user_id: int, duration: str = None) -> str:
     """禁言群成员
 
     Args:
         group_id (int): 群号
         operator_id (int): 操作者QQ号（发送命令的用户）
         user_id (int): 被禁言的用户QQ号
-        duration (int): 禁言时长(秒)，0表示解除禁言，None则使用配置中的默认时长
-
-    Returns:
-        str: 操作结果的文本描述
+        duration (str): 禁言时长，DD:HH:MM 格式：01:02:03 表示1天2小时3分钟, None则使用配置中的默认时长
     """
     bot: Bot = get_bot()
     try:
@@ -103,30 +121,40 @@ async def ban_group_member(group_id: int, operator_id: int, user_id: int, durati
         if not has_perm:
             return err_msg
             
-        # 如果未指定时长，使用配置中的默认时长
-        if duration is None:
-            duration = group_manage_config.get("default_ban_duration", 1800)
+        # 转换时长
+        duration_seconds = 0 if duration == "0" else parse_duration(duration) if duration else group_manage_config.get("default_ban_duration", 1800)
             
-        await bot.set_group_ban(group_id=group_id, user_id=user_id, duration=duration)
-        if duration == 0:
+        await bot.set_group_ban(group_id=group_id, user_id=user_id, duration=duration_seconds)
+        if duration_seconds == 0:
             return f"已解除群{group_id}中用户{user_id}的禁言"
-        return f"已将群{group_id}中用户{user_id}禁言{duration}秒"
+            
+        # 格式化显示时间
+        days = duration_seconds // 86400
+        hours = (duration_seconds % 86400) // 3600
+        minutes = (duration_seconds % 3600) // 60
+        time_str = []
+        if days: time_str.append(f"{days}天")
+        if hours: time_str.append(f"{hours}小时")
+        if minutes: time_str.append(f"{minutes}分钟")
+        time_display = "".join(time_str) if time_str else f"{duration_seconds}秒"
+        
+        return f"已将群{group_id}中用户{user_id}禁言{time_display}"
     except ActionFailed as e:
         logger.error(f"禁言操作失败: {e.info}")
         return f"禁言操作失败: {e.info}"
 
 
 @tool(parse_docstring=True)
-async def group_manage(action: str, group_id: int, operator_id: int, user_id: int = None, special_title: str = None, duration: int = None) -> str:
+async def group_manage(action: str, group_id: int, operator_id: int, user_id: int = None, special_title: str = None, duration: str = None) -> str:
     """Group management tools
     
     Args:
         action: Operation ("get_info"|"set_title"|"ban"|"unban")
         group_id: group_id
-        operator_id: 操作者QQ号（发送命令的用户）
-        user_id: user_id,设置专属头衔或禁言时需要
+        operator_id: 操作者的id(以谁的id执行操作)
+        user_id: 设置专属头衔的用户id或要被禁言的用户id
         special_title: 要设置的专属头衔,设置头衔时需要
-        duration: 禁言时长(秒),不指定则使用配置中的默认时长
+        duration: 禁言时长，格式：DD:HH:MM(如 01:02:03 表示1天2小时3分钟),不指定则使用配置中的默认时长
     """
     if action == "get_info":
         return await get_group_info(group_id)

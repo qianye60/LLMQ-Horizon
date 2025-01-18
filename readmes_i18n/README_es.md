@@ -2,13 +2,13 @@
 
 <img src="static/LLMQ.webp" width="400" style="margin-bottom: 10px;">
 
-# 🤖 LLMQ-Horizon Bot de chat QQ
+# 🤖 LLMQ-Horizon Bot de Chat QQ
 
-**Bot inteligente de QQ basado en NoneBot2 y LangGraph, que admite conversaciones con múltiples modelos, llamadas a herramientas y gestión de sesiones**
+**Un bot inteligente de QQ basado en NoneBot2 y LangGraph, que admite conversaciones con múltiples modelos, llamadas a herramientas y gestión de sesiones**
 
 <br>
 
-**Las herramientas están escritas utilizando Function-calling, sin usar plugins, siguiendo [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) , [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
+**Las herramientas están escritas usando Function-calling, sin usar plugins, con referencia a [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) y [LangChain Tools](https://python.langchain.com/docs/how_to/#tools)**
 
 <br>
 
@@ -18,7 +18,7 @@
 
 <br>
 
-[English](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_en.md) | [Deutsch](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_de.md) | [Español](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_es.md) | [Français](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_fr.md) | [日本語](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_ja.md)
+[Inglés](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_en.md) | [Alemán](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_de.md) | [Español](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_es.md) | [Francés](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_fr.md) | [Japonés](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/readmes_i18n/README_ja.md)
 
 </div>
 
@@ -26,51 +26,53 @@
 
 ## ✨ Características Principales
 
--   **🔌 Rica Integración de Herramientas:** Ejecución de código, consulta del clima, adivinación, dibujo, etc.
--   **🤖 Soporte para Múltiples Modelos Grandes:** OpenAI, Google Gemini, Groq, etc.
--   **💬 Gestión Completa de Conversaciones:** Chats grupales/privados, conversaciones de múltiples turnos, aislamiento de sesiones.
--   **🎯 Métodos de Activación Flexibles:** @, palabras clave, prefijos de comandos.
--   **🎨 Capacidades Multimedia:** Análisis de imágenes, procesamiento de audio y video.
--   **⚡ Gestión Automática de Sesiones:** Limpieza por tiempo de espera, control de concurrencia.
--   **🦖 Potente Capacidad de Expansión:** Posibilidad de escribir herramientas propias, posibilidad de usar herramientas para controlar nonebot.
+-   **🔌 Amplia integración de herramientas:** Ejecución de código, consulta del clima, adivinación, dibujo, etc.
+-   **🤖 Soporte para múltiples modelos grandes:** OpenAI, Google Gemini, Groq, etc.
+-   **💬 Gestión completa de conversaciones:** Chats grupales/privados, conversaciones de varios turnos, aislamiento de sesiones
+-   **🎯 Métodos de activación flexibles:** @, palabras clave, prefijos de comandos
+-   **🎨 Capacidades multimedia:** Análisis de imágenes, procesamiento de audio y video
+-   **⚡ Gestión automática de sesiones:** Limpieza por tiempo de espera, control de concurrencia
+-   **🦖 Potente capacidad de expansión:** Posibilidad de escribir herramientas propias y de usar herramientas para controlar nonebot
 
 ---
 
 ## 🚀 Inicio Rápido
 
-### 1. Preparación del Entorno de Implementación
+### 1. Preparación del entorno de implementación
 
 -   Docker y Docker Compose
 -   Entorno de red estable
--   Sistemas recomendados: Ubuntu 22.04 y superior, Debian 11 y superior
+-   Sistema recomendado: Ubuntu 22.04 y superior, Debian 11 y superior
 
-### 2. Pasos de Instalación
+> Nota: Al activar herramientas con el modelo deepseek, no use más de 5, y las indicaciones deben ser lo más breves posible. De lo contrario, deepseek llamará a las herramientas sin parar y las saturará, o simplemente no las usará.
+
+### 2. Pasos de instalación
 
 ```bash
-# 1. Clonar el proyecto
+# 1. Clona el proyecto
 git clone https://github.com/Mgrsc/LLMQ-Horizon.git
 cd LLMQ-Horizon
 
-# 2. Preparar el archivo de configuración
+# 2. Prepara los archivos de configuración
 cp config-tools.toml.example config-tools.toml
 cp config.toml.example config.toml
 cd napcat/config/
-mv onebot11_qq.json onebot11_<tu_QQ>.json  # Reemplazar con el número de QQ real
+mv onebot11_qq.json onebot11_<tu_QQ>.json  # Reemplaza con tu número de QQ real
 
-# 3. Modificar la configuración (consultar los comentarios en los archivos de configuración)
+# 3. Modifica la configuración (consulta los comentarios en los archivos de configuración)
 vim config.toml
 vim config-tools.toml
 
-# 4. Iniciar el servicio
+# 4. Inicia el servicio
 docker compose up -d
 
-# 5. Iniciar sesión escaneando el código QR
+# 5. Escanea el código QR para iniciar sesión
 docker compose logs -f
 
-# Reiniciar el servicio LLMQ
+# Reinicia el servicio LLMQ
 docker compose restart llmq
 
-# Detener todos los servicios
+# Detén todos los servicios
 docker compose down
 ```
 
@@ -79,9 +81,9 @@ docker compose down
 <details>
 <summary>💻 Ejecución de Código (Code Runner - Judge0)</summary>
 
-[Tutorial de implementación oficial de Judge0](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
+[Tutorial oficial de despliegue de Judge0](https://github.com/judge0/judge0/blob/master/CHANGELOG.md)
 
-1. **Preparar un entorno Ubuntu 22.04 o superior y Docker, configurar cgroup v1:**
+1. **Prepara un entorno Ubuntu 22.04 o superior y Docker, configura cgroup v1:**
 
     ```bash
     sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
@@ -89,28 +91,28 @@ docker compose down
     sudo reboot
     ```
 
-2. **Implementar Judge0:**
+2. **Despliega Judge0:**
 
     ```bash
     wget https://github.com/judge0/judge0/releases/download/v1.13.1/judge0-v1.13.1.zip
     unzip judge0-v1.13.1.zip
     cd judge0-v1.13.1
 
-    # Generar dos contraseñas y establecer contraseñas
+    # Genera dos contraseñas y configúralas
     openssl rand -hex 32
 
-    # Usar las contraseñas generadas para actualizar las variables REDIS_PASSWORD y POSTGRES_PASSWORD en el archivo judge0.conf.
+    # Usa las contraseñas generadas para actualizar las variables REDIS_PASSWORD y POSTGRES_PASSWORD en el archivo judge0.conf.
 
-    # Iniciar el servicio
+    # Inicia el servicio
     docker-compose up -d db redis
     sleep 10s
     docker-compose up -d
     sleep 5s
     ```
 
-    Su instancia Judge0 CE v1.13.1 ahora está iniciada y en funcionamiento; visite http://<su_dirección_IP_del_servidor>:2358/docs para obtener la documentación.
+    Tu instancia Judge0 CE v1.13.1 ahora está iniciada y funcionando; accede a http://<la dirección IP de tu servidor>:2358/docs para obtener la documentación.
 
-3. **Configurar config-tools.toml:**
+3. **Configura config-tools.toml:**
 
     ```toml
     [code_generation_running]
@@ -121,13 +123,15 @@ docker compose down
 </details>
 
 <details>
-<summary>😎 Notas (memos_manage - Memos)</summary>
+<summary>📝 Notas (memos_manage - Memos)</summary>
 
-[Tutorial de implementación oficial de Memos](https://www.usememos.com/docs/install/container-install)
+[Tutorial oficial de despliegue de Memos](https://www.usememos.com/docs/install/container-install)
 
-1. **Preparar un entorno Ubuntu 22.04 o superior y Docker:**
+1. **Prepara el entorno:**
+   - Ubuntu 22.04 y superior
+   - Docker y Docker Compose
 
-2. **Escribir el archivo docker-compose.yaml**
+2. **Escribe el archivo docker-compose.yaml**
 
     ```yaml
     services:
@@ -141,108 +145,128 @@ docker compose down
         restart: always
     ```
 
-3. **Iniciar memos**
+3. **Inicia el servicio:**
+```bash
+docker compose up -d
+```
 
-    ```shell
-    docker compose up -d
-    ```
+Ahora puedes acceder a memos en http://<la dirección IP de tu servidor>:5230, y obtener los Tokens en la configuración de memos.
 
-    Ahora puede acceder a memos en http://<su_dirección_IP_del_servidor>:5230, y obtener Tokens en Settings de memos.
+4. **Configura config-tools.toml:**
 
-4. **Completar el archivo de configuración**
+```toml
+[memos_manage]
+url = "http://tu-servidor:5230"
+memos_token = "tu-memos-token"  # Token obtenido desde la página de configuración
+default_visibility = "PRIVATE"
+page_size = 10
+user_id = 6
+```
+</details>
 
-    ```toml
-    [memos]
-    url = "http://tu-servidor:xxx"
-    memos_token = "<ingresar_los_tokens_obtenidos>"
-    default_visibility = "PRIVATE"
-    page_size = 10
-    user_id = 6
-    ```
+<details>
+<summary>📰 Obtención de noticias (get_news - SynapseNews)</summary>
 
+[Dirección del proyecto SynapseNews](https://github.com/Mgrsc/SynapseNews)
+
+1. **Pasos de despliegue:**
+```bash
+git clone https://github.com/Mgrsc/SynapseNews.git
+cd synapsenews
+# Configura config.toml
+docker compose up -d
+```
 </details>
 
 ## 📝 Descripción de Comandos
 
-| Comando                      | Descripción                                  |
-| :--------------------------- | :------------------------------------------- |
-| `/chat model <nombre_modelo>` | Cambiar el modelo de conversación             |
-| `/chat clear`               | Limpiar todas las conversaciones              |
-| `/chat group <true/false>`   | Activar/desactivar el aislamiento de chats grupales |
-| `/chat down`                | Desactivar la función de conversación        |
-| `/chat up`                  | Activar la función de conversación          |
-| `/chat chunk <true/false>`  | Activar/desactivar el envío segmentado         |
+| Comando                      | Descripción                             |
+| :------------------------ | :-------------------------------------- |
+| `/chat model <nombre_modelo>`   | Cambiar el modelo de conversación       |
+| `/chat clear`             | Limpiar todas las sesiones               |
+| `/chat group <true/false>` | Activar/desactivar el aislamiento de grupos |
+| `/chat down`              | Desactivar la función de conversación  |
+| `/chat up`                | Activar la función de conversación     |
+| `/chat chunk <true/false>` | Activar/desactivar el envío por fragmentos |
 
-## 🦊 Técnicas para la Redacción de Prompts
+## 🦊 Consejos para la Elaboración de Indicaciones
 
 <details>
 <summary>1. Principios Básicos</summary>
 
-- Instrucciones Claras: Utilizar lenguaje imperativo para indicar claramente las necesidades del usuario, asegurando que el LLM comprenda con precisión.
-- Proporcionar Ejemplos/Textos de Referencia: Proporcionar ejemplos e información detallada, constituyendo un Prompt Few-shot, que ayude al LLM a fortalecer la comprensión de la intención.
-- Expresión Estructurada: Utilizar símbolos de marcado (como etiquetas XML, triple comillas, Markdown) para mejorar la legibilidad y hacer que la expresión del prompt sea clara.
-- Control de Salida: Especificar los requisitos de formato de salida, estilo de lenguaje, etc., para asegurar que el LLM genere una salida que cumpla con las expectativas del usuario.
-- Optimización del Diseño: Organizar cuidadosamente el diseño de la disposición del Prompt, para que el LLM lo comprenda fácilmente.
+-   Instrucciones claras: Utilizar lenguaje imperativo para establecer las necesidades del usuario, asegurando que el LLM pueda entender con precisión.
+-   Proporcionar ejemplos/texto de referencia: Ofrecer ejemplos e información detallada, configurando un Prompt de pocos disparos para ayudar al LLM a mejorar la comprensión de la intención.
+-   Expresión estructurada: Usar símbolos de marcado (como etiquetas XML, comillas triples, Markdown) para mejorar la legibilidad, haciendo que las indicaciones sean claras.
+-   Control de salida: Especificar los requisitos de formato de salida, estilo de lenguaje, etc., para garantizar que el LLM genere una salida que cumpla con las expectativas del usuario.
+-   Optimización del diseño: Organizar cuidadosamente el diseño del Prompt para facilitar la comprensión del LLM.
 </details>
-<details>
-<summary>2. Otras Técnicas</summary>
 
-- Listar las herramientas disponibles, con explicaciones y requisitos para las herramientas complejas
+<details>
+<summary>2. Otros Consejos</summary>
+
+-   Enumerar las herramientas disponibles, explicando y requiriendo las herramientas complejas.
   ```
   create_speech generar voz
-    - Máximo 40 palabras, no se pueden añadir emojis
-    - Idiomas soportados: chino, inglés, japonés, alemán, francés, español, coreano, árabe, ruso, holandés, italiano, polaco, portugués
-    - Mapeo de voces disponibles:
-        Keli = keli
-        Sigewen = xigewen
-        Shenzi = shenzi
-        Dingzhen = dingzhen
-        Leijun = leijun
-        Lanyangyang = lanyangyang
+    - Máximo 40 caracteres, sin emojis
+    - Idiomas admitidos: chino, inglés, japonés, alemán, francés, español, coreano, árabe, ruso, holandés, italiano, polaco, portugués
+    - Asignaciones de voces disponibles:
+        可莉 = keli
+        西格雯 = xigewen
+        神子 = shenzi
+        丁真 = dingzhen
+        雷军 = leijun
+        懒羊羊 = lanyangyang
   ```
-- Requerir el envío de la dirección file:// retornada por la herramienta
+-   Solicitar el envío de la dirección file:// devuelta por la herramienta.
   ```
-    El dibujo, la obtención de música y el tts deben enviar al usuario el enlace o la dirección de la ruta del archivo retornada
+    El dibujo, la obtención de música y la función TTS deben enviar la dirección del enlace o la ruta del archivo al usuario
   ```
-- Ejemplos de maquetación del contenido devuelto por la herramienta
+-   Ejemplo de formato de la salida de la herramienta.
   ```
-    # Ejemplo de optimización de la maquetación del contenido devuelto por la herramienta
+      # Ejemplo de optimización del formato de salida de la herramienta
     Ejemplo de formato de datos devueltos por get_weather_data:
-    * A: Dime el clima de Changsha hoy
-        T: Llama a la herramienta `get_weather_data` para obtener el clima
+    *   A: Dime el clima de Changsha hoy
+        T: Llamar a la herramienta `get_weather_data` para obtener el clima
         Q:
-        🌤️ Clima de {ubicación}
-        🌅 Amanecer y atardecer: {xx:xx}-{xx:xx sin año}
-        ⏱️ Hora: {hora}
+        🌤️ Clima en {lugar}
+        🌅 Salida y puesta del sol: {xx:xx}-{xx:xx sin año}
+        ⏱️   Hora: {hora}
         🌡️ Temperatura: {temperatura}℃
         💧 Humedad: {humedad}%
         🧣 Sensación térmica: {sensación térmica}℃
         🍃 Dirección y velocidad del viento: {dirección del viento}-{velocidad del viento}
-        📋 Condición general: {análisis integral}
-        Cariño, deberías ponerte más ropa cuando salgas~ Ten cuidado de no resfriarte
+        📋 Estado general: {análisis general}
+        ¡Cariño, abrígate al salir para no resfriarte!
   ```
 </details>
 
-## ❗ Preguntas Frecuentes
+## 🤝 Guía de Contribución
 
-Todas las herramientas se han probado. Si hay algún problema, consulte las siguientes comprobaciones.
+1. Haz un fork de este repositorio
+2. Crea tu rama de función (`git checkout -b feature/AmazingFeature`)
+3. Envía tus cambios (`git commit -m 'Añade una característica increíble'`)
+4. Sube a la rama (`git push origin feature/AmazingFeature`)
+5. Abre una solicitud de extracción (Pull Request)
+
+## 🤖 Preguntas Frecuentes
+Todas las herramientas han sido probadas. Si hay algún problema, consulta la siguiente verificación.
 
 <details>
-<summary>1. Error al iniciar sesión</summary>
+<summary>1. Fallo al iniciar sesión</summary>
 
--   Comprobar si la configuración del número de QQ es correcta
--   Confirmar el formato del archivo de configuración de napcat
--   Ver los logs del contenedor de napcat para solucionar problemas
+-   Comprueba si la configuración del número de QQ es correcta.
+-   Confirma el formato del archivo de configuración de napcat.
+-   Consulta los registros del contenedor napcat para solucionar el problema.
 
 </details>
 
 <details>
-<summary>2. Error al llamar a las herramientas</summary>
+<summary>2. Fallo al llamar a la herramienta</summary>
 
--   Confirmar que el modelo admite la función de llamada a funciones
--   Comprobar la configuración de las claves API relacionadas
--   Ver los logs del contenedor LLMQ para ubicar los errores
--   Añadir [LangSmith](https://smith.langchain.com/) en el contenedor docker para depurar
+-   Confirma que el modelo admite la capacidad de llamada a funciones.
+-   Comprueba la configuración de las claves de la API relacionadas.
+-   Consulta los registros del contenedor LLMQ para localizar el error.
+-   Añade [LangSmith](https://smith.langchain.com/) al contenedor docker para depurar.
 
     ```yaml
     environment:
@@ -257,7 +281,7 @@ Todas las herramientas se han probado. Si hay algún problema, consulte las sigu
 <details>
 <summary>3. Otros problemas</summary>
 
--   Para otros problemas, únete al grupo QQ para discutir
+-   Para otros problemas, únete al grupo de QQ para discutir.
     ![qrcode](static/qrcode.jpg)
 
 </details>
@@ -274,9 +298,6 @@ Todas las herramientas se han probado. Si hay algún problema, consulte las sigu
 ## 📄 Licencia
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
-
-Este proyecto está licenciado bajo la [Licencia MIT](https://github.com/Mgrsc/LLMQ-Horizon/blob/main/LICENSE).
-
+Este proyecto tiene licencia MIT - consulta el archivo [LICENSE](LICENSE) para obtener detalles.
 Copyright © 2024 Bitfennec.
-
 ---
