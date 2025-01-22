@@ -62,15 +62,24 @@ def search_netease_music(
 def normalize_filename(filename: str) -> str:
     """
     规范化文件名：
-    - 移除特殊字符
-    - 将空格替换为下划线
-    - 仅保留字母、数字、下划线和中文字符
+    1. 移除或替换不安全的字符
+    2. 将空格和特殊字符替换为下划线
+    3. 保留中文字符、字母、数字、下划线
+    4. 处理连续的下划线
     """
-    # 保留字母、数字、下划线和中文字符，其他替换为空格
-    normalized = re.sub(r'[^\w\u4e00-\u9fff]', ' ', filename)
-    # 将所有空格（包括单个空格）替换为下划线
-    normalized = re.sub(r'\s', '_', normalized.strip())
-    return normalized
+    # 第一步：将不安全的字符（除了空格和括号）替换为下划线
+    normalized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    
+    # 第二步：将括号和空格替换为下划线
+    normalized = re.sub(r'[\s\(\)\[\]\{\}]', '_', normalized)
+    
+    # 第三步：处理连续的下划线
+    normalized = re.sub(r'_+', '_', normalized)
+    
+    # 第四步：移除首尾的下划线
+    normalized = normalized.strip('_')
+    
+    return normalized if normalized else 'unnamed'
 
 def get_cached_filename(song_url, output_dir="."):
     """
@@ -84,7 +93,7 @@ def get_cached_filename(song_url, output_dir="."):
         缓存文件的完整路径，如果无法获取文件名，返回 None
     """
     ydl_opts = {
-        'outtmpl': f'{output_dir}/%(title)s.%(ext)s',
+        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
         'format': 'bestaudio/best',
         'skip_download': True,
     }
@@ -96,10 +105,13 @@ def get_cached_filename(song_url, output_dir="."):
             
             # 规范化文件名部分
             base_name = os.path.splitext(os.path.basename(original_filename))[0]
-            ext = os.path.splitext(original_filename)[1]
+            ext = os.path.splitext(original_filename)[1] or '.mp3'  # 如果没有扩展名，默认用.mp3
             normalized_name = normalize_filename(base_name)
             
-            return os.path.join(os.path.dirname(original_filename), f"{normalized_name}{ext}")
+            # 确保输出目录存在
+            os.makedirs(output_dir, exist_ok=True)
+            
+            return os.path.join(output_dir, f"{normalized_name}{ext}")
         except yt_dlp.DownloadError as e:
             print(f"获取文件名出错: {e}")
             return None
@@ -204,8 +216,29 @@ def download_first_netease_music(keyword, search_type=1, limit=3, output_dir="."
     search_results = search_netease_music(keyword, search_type, limit)
 
     if search_results:
-        first_song_url = search_results[0]['url']
-        return download_song_by_url(first_song_url, CACHE_DIR)
+        first_song = search_results[0]
+        first_song_url = first_song['url']
+        # 使用歌曲名作为文件名并规范化
+        normalized_name = normalize_filename(first_song['name'])
+        # 下载到缓存目录
+        filename = get_cached_filename(first_song_url, CACHE_DIR)
+        if filename:
+            # 确保文件名是规范化的
+            dir_name = os.path.dirname(filename)
+            ext = os.path.splitext(filename)[1]
+            final_filename = os.path.join(dir_name, f"{normalized_name}{ext}")
+            # 下载文件
+            ydl_opts = {
+                'outtmpl': final_filename,
+                'format': 'bestaudio/best',
+            }
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([first_song_url])
+                return final_filename
+            except Exception as e:
+                print(f"下载失败: {e}")
+                return None
     else:
         print("没有找到可以下载的歌曲")
         return None
@@ -224,8 +257,11 @@ def _get_hhlq_music(music_name) -> str:
         )
         music_url = re.search(r"^(https?://[^\s]+?\.mp3)", response.json()["music_url"]).group(0)
         
-        # 下载到缓存目录, 并重新命名
-        filename = download_to_cache(music_url, music_name)
+        # 规范化文件名
+        normalized_name = normalize_filename(music_name)
+        
+        # 下载到缓存目录
+        filename = download_to_cache(music_url, normalized_name)
         return filename if filename else "下载失败"
 
     except Exception as e:
@@ -245,16 +281,18 @@ def download_to_cache(url, music_name):
         response = requests.get(url, stream=True)
         response.raise_for_status()
 
-        # 规范化音乐名称
-        normalized_name = normalize_filename(music_name)
-        
         # 获取原始文件扩展名
         original_filename = url.split("/")[-1]
-        ext = os.path.splitext(original_filename)[1]
+        ext = os.path.splitext(original_filename)[1] or ".mp3"  # 如果没有扩展名，默认用.mp3
         
-        # 组合最终的文件名
+        # 规范化音乐名称并组合最终的文件名
+        normalized_name = normalize_filename(music_name)
         filename = os.path.join(CACHE_DIR, f"{normalized_name}{ext}")
         
+        # 如果文件已存在，先删除
+        if os.path.exists(filename):
+            os.remove(filename)
+            
         with open(filename, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
@@ -271,6 +309,9 @@ def get_music(music_name: str, provider: str = "hhlq") -> str:
     Args:
         music_name (str): music name e.g. "邓紫棋泡沫"
         provider (str): Music provider. Available values: "hhlq", "netease"
+    
+    Returns:
+        str: file path(file://)
     """
     if not music_name:
         return "Error: Empty music name"
