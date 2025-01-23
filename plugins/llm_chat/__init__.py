@@ -445,9 +445,10 @@ async def handle_chat_command(args: Message = CommandArg(), event: Event = None)
             try:
                 current_model = llm.model_name if hasattr(llm, 'model_name') else llm.model
                 await chat_command.finish(f"当前模型: {current_model}")
+            except MatcherException:
+                raise
             except Exception as e:
                 await chat_command.finish(f"获取当前模型失败: {str(e)}")
-                
         model_name = command_args[1]
         try:
             new_llm = await get_llm(model_name)
