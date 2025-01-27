@@ -37,34 +37,55 @@ def optimize_content(subject: str = "", content: str = "", draft_desc: str = "")
     
     prompt = "\n".join(prompt_parts)
     
-    data = {
-        "model": model,
-        "messages": [
-            {
-                "role": "system",
-                "content": prompt_all.get("send_email")
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    }
+    def parse_response(response_text: str) -> tuple:
+        """解析模型响应，返回主题和内容"""
+        print(f"[DEBUG] 原始响应: {response_text}")
+        try:
+            response_data = json.loads(response_text)
+            subject = response_data.get("subject", "")
+            content = response_data.get("content", "")
+            print(f"[DEBUG] 解析后的主题: {subject}")
+            print(f"[DEBUG] 解析后的内容长度: {len(content)} 字符")
+            print(f"[DEBUG] 解析后的内容预览: {content[:200]}...")
+            if subject and content:
+                return subject.replace('"', '\\"'), content.replace('"', '\\"') 
+        except json.JSONDecodeError:
+            pass
+        return None, None
     
-    if format_json:
-        data["response_format"] = {
-            "type": "json_object"
+    def make_api_call() -> tuple:
+        """发起API调用并处理响应"""
+        data = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": prompt_all.get("send_email")
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
         }
-    
-    try:
+        
+        if format_json:
+            data["response_format"] = {
+                "type": "json_object"
+            }
+            
         api_url = f"{openai_base_url}/chat/completions"
         response = requests.post(api_url, headers=headers, json=data, timeout=timeout)
         result = response.json()
         response_text = result['choices'][0]['message']['content']
-        
-        # 直接解析JSON响应
-        response_data = json.loads(response_text)
-        return response_data["subject"], response_data["content"]
+        return parse_response(response_text)
+    
+    # 主处理逻辑，包含重试机制
+    try:
+        result_subject, result_content = make_api_call()
+        if result_subject and result_content:
+             return result_subject, result_content
+        return subject, content
             
     except Exception as e:
         print(f"内容优化失败: {e}")
