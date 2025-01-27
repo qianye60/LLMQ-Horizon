@@ -115,3 +115,5 @@ from_email = "noreply@example.com"  # 发件人邮箱地址
 openai_api_key = "<OPENAI_API_KEY>"  # 支持OpenAI格式的API密钥，用于邮件内容优化或者编写
 openai_base_url = "https://api.example.com/v1"  # API基础URL
 model = "deepseek-chat"  # 邮件内容优化模型或者编写
+format_json = true # 是否支持返回json格式，ds-r1改为false
+timeout = 60 # 邮件优化的超时时间

@@ -11,6 +11,8 @@ from_email = smtp_config.get("from_email")
 openai_api_key = smtp_config.get("openai_api_key")
 openai_base_url = smtp_config.get("openai_base_url", "https://api.openai.com/v1")
 model = smtp_config.get("model", "deepseek-chat")
+format_json = smtp_config.get("format_json", True)
+timeout = smtp_config.get("timeout", 60)
 
 def optimize_content(subject: str = "", content: str = "", draft_desc: str = "") -> tuple:
     """使用大模型优化邮件主题和内容"""
@@ -46,15 +48,17 @@ def optimize_content(subject: str = "", content: str = "", draft_desc: str = "")
                 "role": "user",
                 "content": prompt
             }
-        ],
-        "response_format": {
+        ]
+    }
+    
+    if format_json:
+        data["response_format"] = {
             "type": "json_object"
         }
-    }
     
     try:
         api_url = f"{openai_base_url}/chat/completions"
-        response = requests.post(api_url, headers=headers, json=data)
+        response = requests.post(api_url, headers=headers, json=data, timeout=timeout)
         result = response.json()
         response_text = result['choices'][0]['message']['content']
         
@@ -95,7 +99,7 @@ def send_email(email: str, subject: str = "", content: str = "", optimize: bool 
             "from": from_email,
             "to": to_emails,
             "subject": subject,
-            "text": content,
+            "html": content,
         }
         
         response = resend.Emails.send(params)
