@@ -22,6 +22,16 @@ groq_models = {
     "llama-3.3-70b-versatile"
 }
 
+think_oai_models = {
+    "o1",
+    "o1-2024-12-17",
+    "o1-preview",
+    "o1-preview-2024-09-12",
+    "o3-mini",
+    "03-mini-2025-01-31"
+}
+    
+
 class MyOpenAI(ChatOpenAI):
     @property
     def _default_params(self) -> Dict[str, Any]:
@@ -51,6 +61,15 @@ async def get_llm(model=None):
                 api_key=plugin_config.llm.api_key,
                 base_url=plugin_config.llm.base_url,
                 top_p=plugin_config.llm.top_p,
+            )
+            
+        if model in think_oai_models:
+            print("使用标准openai")
+            return ChatOpenAI(
+                model=model,
+                max_completion_tokens=plugin_config.llm.max_tokens,
+                api_key=plugin_config.llm.api_key,
+                base_url=plugin_config.llm.base_url,
             )
             
         if model in groq_models:
