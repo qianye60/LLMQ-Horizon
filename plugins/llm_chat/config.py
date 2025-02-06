@@ -51,6 +51,7 @@ class ResponseConfig(BaseModel):
 class SensitiveWordsConfig(BaseModel):
     """敏感词配置"""
     input_words: List[str] = []
+    output_words: List[str] = []
 
 class Config(BaseModel):
     llm: LLMConfig
@@ -63,10 +64,10 @@ class Config(BaseModel):
         """从 config.toml 加载配置"""
         root_path = Path(__file__).resolve().parents[2]
         config_path = root_path / "config.toml"
-        
+
         if not config_path.exists():
             raise RuntimeError(f"Config file not found at {config_path}")
-            
+
         try:
             with open(config_path, "rb") as f:
                 toml_config = tomli.load(f)
@@ -79,13 +80,13 @@ class Config(BaseModel):
                 temperature=toml_config["llm"].get("temperature", 0.7),
                 max_tokens=toml_config["llm"].get("max_tokens", 2000),
                 max_context_messages=toml_config["llm"].get("max_context_messages", 10),
-                system_prompt=toml_config["llm"]["system_prompt"],
+                system_prompt=toml_config["llm"].get("system_prompt"),
                 google_api_key=toml_config["llm"].get("google_api_key", ""),
                 top_p=toml_config["llm"].get("top_p", 1.0),
                 groq_api_key=toml_config["llm"].get("groq_api_key", ""),
                 qa_pairs=toml_config["llm"].get("qa_pairs", []),
             )
-            
+
             plugin_config = PluginConfig(
                 trigger_words=toml_config["plugin_settings"]["trigger_words"],
                 trigger_mode=toml_config["plugin_settings"]["trigger_mode"],
@@ -104,7 +105,7 @@ class Config(BaseModel):
                     char_per_s=toml_config.get("chunk", {}).get("char_per_s", 5)
                 )
             )
-            
+
             responses_config = ResponseConfig(
                 empty_message_replies=toml_config["responses"].get("empty_message_replies", ResponseConfig().empty_message_replies),
                 token_limit_error=toml_config["responses"].get("token_limit_error", ResponseConfig().token_limit_error),
@@ -118,14 +119,21 @@ class Config(BaseModel):
                 input_words=toml_config.get("sensitive_words", {}).get("input_words", []),
                 output_words=toml_config.get("sensitive_words", {}).get("output_words", [])
             )
-            
+
             return cls(
-                llm=llm_config, 
-                plugin=plugin_config, 
+                llm=llm_config,
+                plugin=plugin_config,
                 responses=responses_config,
                 sensitive_words=sensitive_words_config
             )
+        except tomli.TOMLDecodeError as e:
+            raise RuntimeError(f"TOML parsing error: {e}")
+        except KeyError as e:
+            raise RuntimeError(f"Missing key in config.toml: {e}")
         except Exception as e:
-            raise RuntimeError(f"Failed to load config.toml: {str(e)}")
-
-plugin_config = Config.load_config()
+            raise RuntimeError(f"An unexpected error occurred: {e}")
+        
+try:
+    plugin_config = Config.load_config()
+except RuntimeError as e:
+    print(e)
