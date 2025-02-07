@@ -59,14 +59,21 @@ def optimize_content(subject: str = "", content: str = "", draft_desc: str = "")
             "model": model,
             "messages": [
                 {
-                    "role": "system",
+                    "role": "user",
                     "content": prompt_all.get("send_email")
+                },
+                {
+                    "role": "assistant",
+                    "content": "好的，我将严格遵循你的要求编写邮件，并且严格遵守输出格式使用json格式进行输出"
                 },
                 {
                     "role": "user",
                     "content": prompt
                 }
-            ]
+            ],
+            "temperature": 0.6,
+            "max_tokens": 8192,
+            "top_p": 0.8,
         }
         
         if format_json:
