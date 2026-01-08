@@ -423,26 +423,12 @@ async def group_manage(
     """群组管理工具 - 通过自然语言管理群组
 
     Args:
-        action: 操作类型，可选值：
-            - "get_info": 获取群信息
-            - "get_members": 获取群成员列表
-            - "get_member_info": 获取群成员详细信息
-            - "set_title": 设置群成员专属头衔
-            - "ban": 禁言群成员
-            - "unban": 解除禁言
-            - "kick": 踢出群成员
-            - "whole_ban": 全员禁言
-            - "whole_unban": 解除全员禁言
-            - "set_admin": 设置管理员
-            - "unset_admin": 取消管理员
-            - "set_card": 设置群名片
-            - "set_group_name": 修改群名称
-            - "leave": 机器人退群
+        action: 操作类型，可选值为 get_info(获取群信息)、get_members(获取群成员列表)、get_member_info(获取群成员详细信息)、set_title(设置群成员专属头衔)、ban(禁言群成员)、unban(解除禁言)、kick(踢出群成员)、whole_ban(全员禁言)、whole_unban(解除全员禁言)、set_admin(设置管理员)、unset_admin(取消管理员)、set_card(设置群名片)、set_group_name(修改群名称)、leave(机器人退群)
         group_id: 群号
         operator_id: 操作者的QQ号（用于权限验证）
         user_id: 目标用户QQ号（部分操作需要）
         special_title: 专属头衔（set_title操作需要）
-        duration: 禁言时长，支持格式：纯数字秒数或1d2h3m格式，默认5分钟
+        duration: 禁言时长，支持格式为纯数字秒数或1d2h3m格式，默认5分钟
         card: 群名片内容（set_card操作需要）
         group_name: 新群名称（set_group_name操作需要）
         enable: 开关状态（用于set_admin等操作）
