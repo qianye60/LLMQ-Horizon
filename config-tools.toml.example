@@ -25,7 +25,7 @@
 
 [tools]
 builtin = ["tavily_search"]  # 启用内置工具列表
-enabled = ["jina_api", "analyze_image", "group_manage", "bot_manage", "admin_manage", "help_menu", "xiantu_help", "get_weather_data"]  # 启用外部工具列表
+enabled = ["jina_api", "analyze_image", "group_manage", "bot_manage", "admin_manage", "help_menu", "xiantu_help", "get_weather_data", "get_music"]  # 启用外部工具列表
 
 [tavily]
 api_key = "<TAVILY_API_KEY>"  # Tavily搜索引擎API密钥
