@@ -293,26 +293,11 @@ async def bot_manage(
     """机器人管理工具 - 管理员通过自然语言控制机器人
 
     Args:
-        action: 操作类型，可选值：
-            - "switch_model": 切换模型
-            - "get_model": 获取当前模型
-            - "bot_on": 开启机器人
-            - "bot_off": 关闭机器人
-            - "clear_sessions": 清理会话
-            - "isolation_on": 开启群聊隔离
-            - "isolation_off": 关闭群聊隔离
-            - "chunk_on": 开启分段发送
-            - "chunk_off": 关闭分段发送
-            - "status": 查看机器人状态
-            - "set_temperature": 设置模型温度
-            - "private_on": 开启私聊
-            - "private_off": 关闭私聊
-            - "group_on": 开启群聊
-            - "group_off": 关闭群聊
+        action: 操作类型，可选值为 switch_model(切换模型)、get_model(获取当前模型)、bot_on(开启机器人)、bot_off(关闭机器人)、clear_sessions(清理会话)、isolation_on(开启群聊隔离)、isolation_off(关闭群聊隔离)、chunk_on(开启分段发送)、chunk_off(关闭分段发送)、status(查看机器人状态)、set_temperature(设置模型温度)、private_on(开启私聊)、private_off(关闭私聊)、group_on(开启群聊)、group_off(关闭群聊)
         operator_id: 操作者的QQ号（用于权限验证）
         model_name: 模型名称（切换模型时需要）
         enable: 开关状态
-        scope: 清理会话范围 ("all"|"group"|"user"|"current")
+        scope: 清理会话范围，可选值为 all、group、user、current
         group_id: 群号
         user_id: 用户QQ号
         temperature: 温度值 (0.0-2.0)

@@ -18,21 +18,7 @@ async def admin_manage(
     """管理员和敏感词管理工具
 
     Args:
-        action: 操作类型，可选值：
-            - "set_super": 设置超级管理员（首次设置或转让）
-            - "add_admin": 添加管理员（仅超级管理员可用）
-            - "remove_admin": 移除管理员（仅超级管理员可用）
-            - "list_admins": 查看管理员列表
-            - "check_permission": 检查用户权限
-            - "add_word": 添加敏感词（管理员可用）
-            - "remove_word": 移除敏感词（管理员可用）
-            - "list_words": 查看敏感词列表和设置
-            - "clear_words": 清空敏感词（仅超级管理员可用）
-            - "set_threshold": 设置禁言阈值（触发多少次禁言）
-            - "set_duration": 设置禁言时长（分钟）
-            - "check_violations": 查看用户违规次数
-            - "reset_violations": 重置用户违规次数
-            - "clear_violations": 清空所有违规记录（仅超级管理员可用）
+        action: 操作类型，可选值为 set_super(设置超级管理员)、add_admin(添加管理员)、remove_admin(移除管理员)、list_admins(查看管理员列表)、check_permission(检查用户权限)、add_word(添加敏感词)、remove_word(移除敏感词)、list_words(查看敏感词列表和设置)、clear_words(清空敏感词)、set_threshold(设置禁言阈值)、set_duration(设置禁言时长)、check_violations(查看用户违规次数)、reset_violations(重置用户违规次数)、clear_violations(清空所有违规记录)
         operator_id: 操作者的QQ号（用于权限验证）
         target_id: 目标用户QQ号（用于管理员操作或查看违规）
         word: 敏感词内容

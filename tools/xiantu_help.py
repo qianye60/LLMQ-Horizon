@@ -210,13 +210,7 @@ def xiantu_help(topic: str = "intro") -> str:
     """仙途游戏帮助工具 - 提供游戏介绍、配置教程、常见问题解答
 
     Args:
-        topic: 帮助主题，可选值：
-            - "intro": 游戏介绍
-            - "tavern": SillyTavern（酒馆）配置教程
-            - "api": API 配置教程
-            - "faq": 常见问题解答
-            - "changelog": 最新更新日志
-            - "all": 显示所有帮助信息
+        topic: 帮助主题，可选值为 intro(游戏介绍)、tavern(SillyTavern配置教程)、api(API配置教程)、faq(常见问题解答)、changelog(最新更新日志)、all(显示所有帮助信息)
     """
     topic_map = {
         "intro": GAME_INTRO,
