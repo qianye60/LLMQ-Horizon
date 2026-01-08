@@ -26,15 +26,15 @@
 
 ## ✨ 主要特性
 
--   **🔌 丰富的工具集成：** 代码运行、天气查询、绘画、音乐搜索等
--   **🤖 支持多种大模型：** OpenAI、Google Gemini、Groq、Claude、DeepSeek 等
--   **💬 完善的对话管理：** 群聊/私聊、多轮对话、会话隔离
--   **🎯 灵活的触发方式：** @、关键词、命令前缀
--   **🎨 多媒体能力：** 图片分析、AI绘画、语音合成
--   **⚡ 自动的会话管理：** 超时清理、并发控制
--   **👑 管理员系统：** 超级管理员、管理员列表、敏感词过滤
--   **🛡️ 敏感词管理：** 自动撤回、累计禁言、违规记录
--   **🦖 强大的扩展能力：** 可自行编写 tools，可使用 tools 控制 nonebot
+- **🔌 丰富的工具集成：** 代码运行、天气查询、绘画、音乐搜索等
+- **🤖 支持多种大模型：** OpenAI、Google Gemini、Groq、Claude、DeepSeek 等
+- **💬 完善的对话管理：** 群聊/私聊、多轮对话、会话隔离
+- **🎯 灵活的触发方式：** @、关键词、命令前缀
+- **🎨 多媒体能力：** 图片分析、AI绘画、语音合成
+- **⚡ 自动的会话管理：** 超时清理、并发控制
+- **👑 管理员系统：** 超级管理员、管理员列表、敏感词过滤
+- **🛡️ 敏感词管理：** 自动撤回、累计禁言、违规记录
+- **🦖 强大的扩展能力：** 可自行编写 tools，可使用 tools 控制 nonebot
 
 ---
 
@@ -42,9 +42,9 @@
 
 ### 1. 部署环境准备
 
--   Docker 和 Docker Compose
--   稳定的网络环境
--   建议系统：Ubuntu 22.04 及以上, Debian 11 以上
+- Docker 和 Docker Compose
+- 稳定的网络环境
+- 建议系统：Ubuntu 22.04 及以上, Debian 11 以上
 
 > 注意: deepseek模型开启工具不要超过5个，并且提示词尽可能少，否则ds会疯狂调用工具给你刷爆，要不就不调用工具玩个寂寞。
 
@@ -52,7 +52,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/Mgrsc/LLMQ-Horizon.git
+git clone https://github.com/qianye60/LLMQ-Horizon.git
 cd LLMQ-Horizon
 
 # 2. 准备配置文件
@@ -87,40 +87,38 @@ docker compose down
 
 1. **准备 Ubuntu 22.04 以上环境及 Docker，配置 cgroup v1：**
 
-    ```bash
-    sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
-    sudo update-grub
-    sudo reboot
-    ```
-
+   ```bash
+   sudo sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"/' /etc/default/grub
+   sudo update-grub
+   sudo reboot
+   ```
 2. **部署 Judge0：**
 
-    ```bash
-    wget https://github.com/judge0/judge0/releases/download/v1.13.1/judge0-v1.13.1.zip
-    unzip judge0-v1.13.1.zip
-    cd judge0-v1.13.1
+   ```bash
+   wget https://github.com/judge0/judge0/releases/download/v1.13.1/judge0-v1.13.1.zip
+   unzip judge0-v1.13.1.zip
+   cd judge0-v1.13.1
 
-    # 生成两个密码并设置密码
-    openssl rand -hex 32
+   # 生成两个密码并设置密码
+   openssl rand -hex 32
 
-    # 使用生成的密码更新 judge0.conf 文件中的 REDIS_PASSWORD 和 POSTGRES_PASSWORD 变量。
+   # 使用生成的密码更新 judge0.conf 文件中的 REDIS_PASSWORD 和 POSTGRES_PASSWORD 变量。
 
-    # 启动服务
-    docker-compose up -d db redis
-    sleep 10s
-    docker-compose up -d
-    sleep 5s
-    ```
+   # 启动服务
+   docker-compose up -d db redis
+   sleep 10s
+   docker-compose up -d
+   sleep 5s
+   ```
 
-    您的 Judge0 CE v1.13.1 实例现已启动并运行；访问 http://<您的服务器 IP 地址>:2358/docs 获取文档。
-
+   您的 Judge0 CE v1.13.1 实例现已启动并运行；访问 http://<您的服务器 IP 地址>:2358/docs 获取文档。
 3. **配置 config-tools.toml：**
 
-    ```toml
-    [code_generation_running]
-    judge0_url = "http://your-server:2358"
-    judge0_api_key = "your-api-key"
-    ```
+   ```toml
+   [code_generation_running]
+   judge0_url = "http://your-server:2358"
+   judge0_api_key = "your-api-key"
+   ```
 
 </details>
 
@@ -130,24 +128,24 @@ docker compose down
 [Memos 官方部署教程](https://www.usememos.com/docs/install/container-install)
 
 1. **准备环境：**
+
    - Ubuntu 22.04 及以上
    - Docker 和 Docker Compose
-
 2. **编写 docker-compose.yaml 文件**
 
-    ```yaml
-    services:
-      memos:
-        image: neosmemo/memos:stable
-        container_name: memos
-        ports:
-          - 5230:5230
-        volumes:
-          - ./memos:/var/opt/memos
-        restart: always
-    ```
-
+   ```yaml
+   services:
+     memos:
+       image: neosmemo/memos:stable
+       container_name: memos
+       ports:
+         - 5230:5230
+       volumes:
+         - ./memos:/var/opt/memos
+       restart: always
+   ```
 3. **启动服务：**
+
 ```bash
 docker compose up -d
 ```
@@ -164,6 +162,7 @@ default_visibility = "PRIVATE"
 page_size = 10
 user_id = 6
 ```
+
 </details>
 
 <details>
@@ -172,70 +171,75 @@ user_id = 6
 [SynapseNews 项目地址](https://github.com/Mgrsc/SynapseNews)
 
 1. **部署步骤：**
+
 ```bash
 git clone https://github.com/Mgrsc/SynapseNews.git
 cd synapsenews
 # 配置 config.toml
 docker compose up -d
 ```
+
 </details>
 
 ## 📝 命令说明
 
-| 命令                      | 说明                             |
-| :------------------------ | :------------------------------- |
-| `/chat model <模型名>`   | 切换对话模型                     |
-| `/chat clear`             | 清理所有会话                     |
-| `/chat group <true/false>` | 开关群聊隔离                     |
-| `/chat down`              | 关闭对话功能                     |
-| `/chat up`                | 开启对话功能                     |
-| `/chat chunk <true/false>` | 开关分段发送                     |
+| 命令                         | 说明         |
+| :--------------------------- | :----------- |
+| `/chat model <模型名>`     | 切换对话模型 |
+| `/chat clear`              | 清理所有会话 |
+| `/chat group <true/false>` | 开关群聊隔离 |
+| `/chat down`               | 关闭对话功能 |
+| `/chat up`                 | 开启对话功能 |
+| `/chat chunk <true/false>` | 开关分段发送 |
 
 ## 👑 管理员系统
 
 机器人内置管理员系统，支持通过自然语言进行管理操作。
 
 ### 管理员层级
+
 - **超级管理员**：只能有一个，可以管理管理员列表、清空敏感词等
 - **管理员**：可以添加/删除敏感词、设置禁言参数、查看违规记录等
 
 ### 敏感词功能
+
 - **自动撤回**：触发敏感词后自动撤回消息
 - **累计禁言**：可设置阈值，累计触发N次后禁言
 - **违规记录**：记录每个用户的违规次数
 
 ### 自然语言管理示例
-| 操作 | 示例 |
-| :--- | :--- |
-| 设置超管 | "把123456设为超级管理员" |
-| 添加管理员 | "添加789012为管理员" |
-| 添加敏感词 | "把xxx添加为敏感词" |
-| 设置阈值 | "设置敏感词触发5次后禁言" |
-| 设置禁言时长 | "设置禁言时长为30分钟" |
-| 查看设置 | "看看敏感词列表" |
+
+| 操作         | 示例                      |
+| :----------- | :------------------------ |
+| 设置超管     | "把123456设为超级管理员"  |
+| 添加管理员   | "添加789012为管理员"      |
+| 添加敏感词   | "把xxx添加为敏感词"       |
+| 设置阈值     | "设置敏感词触发5次后禁言" |
+| 设置禁言时长 | "设置禁言时长为30分钟"    |
+| 查看设置     | "看看敏感词列表"          |
 
 ## 🛠️ 内置工具列表
 
-| 工具 | 说明 |
-| :--- | :--- |
-| `tavily_search` | Tavily 搜索引擎 |
-| `jina_api` | Jina AI 统一工具（网络搜索、网页读取、事实核查） |
-| `analyze_image` | 图片分析（支持视觉模型） |
-| `get_weather_data` | 天气查询（OpenWeather API） |
-| `create_art` | AI 绘画（支持多个模型） |
-| `create_speech` | AI 语音合成（多种音色） |
-| `create_video` | AI 视频生成 |
-| `get_music` | 音乐搜索和下载 |
-| `code_generation_running` | 代码执行（需部署 Judge0） |
-| `memos_manage` | 备忘录管理（需部署 Memos） |
-| `get_news` | 新闻获取 |
-| `random_picture` | 随机图片 |
-| `send_email` | 邮件发送（Resend API） |
-| `group_manage` | 群组管理（禁言/踢人/头衔等） |
-| `bot_manage` | 机器人管理（切换模型/开关机器人等） |
-| `admin_manage` | 管理员和敏感词管理 |
-| `show_menu` | 功能菜单（图片版） |
-| `xiantu_help` | 仙途游戏帮助 |
+| 工具                        | 说明                                             |
+| :-------------------------- | :----------------------------------------------- |
+| `tavily_search`           | Tavily 搜索引擎                                  |
+| `jina_api`                | Jina AI 统一工具（网络搜索、网页读取、事实核查） |
+| `analyze_image`           | 图片分析（支持视觉模型）                         |
+| `get_weather_data`        | 天气查询（OpenWeather API）                      |
+| `create_art`              | AI 绘画（支持多个模型）                          |
+| `create_speech`           | AI 语音合成（多种音色）                          |
+| `create_video`            | AI 视频生成                                      |
+| `get_music`               | 音乐搜索和下载                                   |
+| `code_generation_running` | 代码执行（需部署 Judge0）                        |
+| `memos_manage`            | 备忘录管理（需部署 Memos）                       |
+| `get_news`                | 新闻获取                                         |
+| `random_picture`          | 随机图片                                         |
+| `send_email`              | 邮件发送（Resend API）                           |
+| `group_manage`            | 群组管理（禁言/踢人/头衔等）                     |
+| `bot_manage`              | 机器人管理（切换模型/开关机器人等）              |
+| `admin_manage`            | 管理员和敏感词管理                               |
+| `show_menu`               | 功能菜单（图片版）                               |
+| `xiantu_help`             | 仙途游戏帮助                                     |
 
 ## 🦊 提示词编写技巧
 
@@ -247,6 +251,7 @@ docker compose up -d
 - 结构化表达：使用标记符号(如XML标签、三引号、Markdown)增强可读性,让提示词表达清晰。
 - 输出控制: 指定输出格式、语言风格等要求,确保LLM生成符合用户期望的输出。
 - 布局优化: 精心安排Prompt的排版布局,便于LLM理解。
+
 </details>
 
 <details>
@@ -286,6 +291,7 @@ docker compose up -d
         📋 综合状况: {综合分析}
         宝宝出门要多穿衣服哦~小心感冒
   ```
+
 </details>
 
 ## 🤝 贡献指南
@@ -297,55 +303,56 @@ docker compose up -d
 5. 打开一个 Pull Request
 
 ## 🤖 常见问题
+
 所有tools均通过测试，如有问题请参考下面检查。
 
 <details>
 <summary>1. 登录失败</summary>
 
--   检查 QQ 号配置是否正确
--   确认 napcat 配置文件格式
--   查看 napcat 容器日志排查问题
+- 检查 QQ 号配置是否正确
+- 确认 napcat 配置文件格式
+- 查看 napcat 容器日志排查问题
 
 </details>
 
 <details>
 <summary>2. 工具调用失败</summary>
 
--   确认模型支持函数调用能力
--   检查相关 API 密钥配置
--   查看 LLMQ 容器日志定位错误
--   在 docker 容器中加入 [LangSmith](https://smith.langchain.com/) 进行 debug
+- 确认模型支持函数调用能力
+- 检查相关 API 密钥配置
+- 查看 LLMQ 容器日志定位错误
+- 在 docker 容器中加入 [LangSmith](https://smith.langchain.com/) 进行 debug
 
-    ```yaml
-    environment:
-      - LANGCHAIN_TRACING_V2=true
-      - LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
-      - LANGCHAIN_API_KEY="<your_api_key>"
-      - LANGCHAIN_PROJECT="<your_project_name>"
-    ```
+  ```yaml
+  environment:
+    - LANGCHAIN_TRACING_V2=true
+    - LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+    - LANGCHAIN_API_KEY="<your_api_key>"
+    - LANGCHAIN_PROJECT="<your_project_name>"
+  ```
 
 </details>
 
 <details>
 <summary>3. 其他问题</summary>
 
--   其他问题请加 QQ 群讨论
-    ![qrcode](static/qrcode.jpg)
+- 其他问题请加 QQ 群讨论
+  ![qrcode](static/qrcode.jpg)
 
 </details>
 
 ## 🔗 相关项目
 
--   [NoneBot2](https://github.com/nonebot/nonebot2)
--   [LangGraph](https://github.com/langchain-ai/langgraph)
--   [LangChain](https://github.com/langchain-ai/langchain)
--   [Judge0](https://github.com/judge0/judge0)
--   [Memos](https://github.com/usememos/memos)
--   [NapCat](https://github.com/NapNeko/NapCatQQ)
+- [NoneBot2](https://github.com/nonebot/nonebot2)
+- [LangGraph](https://github.com/langchain-ai/langgraph)
+- [LangChain](https://github.com/langchain-ai/langchain)
+- [Judge0](https://github.com/judge0/judge0)
+- [Memos](https://github.com/usememos/memos)
+- [NapCat](https://github.com/NapNeko/NapCatQQ)
 
 ## 📄 许可证
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FMgrsc%2FLLMQ-Horizon?ref=badge_large&issueType=license)
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 Copyright © 2024 Bitfennec.
----
+----------------------------
