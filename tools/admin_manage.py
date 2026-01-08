@@ -13,17 +13,19 @@ async def admin_manage(
     target_id: int = None,
     word: str = None,
     threshold: int = None,
-    duration: int = None
+    duration: int = None,
+    enable: bool = None
 ) -> str:
     """管理员和敏感词管理工具
 
     Args:
-        action: 操作类型，可选值为 set_super(设置超级管理员)、add_admin(添加管理员)、remove_admin(移除管理员)、list_admins(查看管理员列表)、check_permission(检查用户权限)、add_word(添加敏感词)、remove_word(移除敏感词)、list_words(查看敏感词列表和设置)、clear_words(清空敏感词)、set_threshold(设置禁言阈值)、set_duration(设置禁言时长)、check_violations(查看用户违规次数)、reset_violations(重置用户违规次数)、clear_violations(清空所有违规记录)
+        action: 操作类型，可选值为 set_super(设置超级管理员)、add_admin(添加管理员)、remove_admin(移除管理员)、list_admins(查看管理员列表)、check_permission(检查用户权限)、add_word(添加敏感词)、remove_word(移除敏感词)、list_words(查看敏感词列表和设置)、clear_words(清空敏感词)、set_threshold(设置禁言阈值)、set_duration(设置禁言时长)、toggle_monitor(开关敏感词监控)、toggle_auto_ban(开关自动禁言)、check_violations(查看用户违规次数)、reset_violations(重置用户违规次数)、clear_violations(清空所有违规记录)
         operator_id: 操作者的QQ号（用于权限验证）
         target_id: 目标用户QQ号（用于管理员操作或查看违规）
         word: 敏感词内容
         threshold: 禁言阈值（次数）
         duration: 禁言时长（分钟）
+        enable: 开关状态（用于toggle操作）
 
     Returns:
         操作结果信息
@@ -110,6 +112,28 @@ async def admin_manage(
         if duration is None:
             return "请提供禁言时长（分钟）"
         success, msg = sensitive_words_manager.set_ban_duration(duration * 60)
+        return msg
+
+    # 开关敏感词监控
+    elif action == "toggle_monitor":
+        if not admin_manager.is_admin(operator_id):
+            return "只有管理员才能开关敏感词监控"
+        if enable is None:
+            # 如果没指定，返回当前状态
+            status = "开启" if sensitive_words_manager.is_enabled else "关闭"
+            return f"敏感词监控当前状态: {status}"
+        success, msg = sensitive_words_manager.toggle_enabled(enable)
+        return msg
+
+    # 开关自动禁言
+    elif action == "toggle_auto_ban":
+        if not admin_manager.is_admin(operator_id):
+            return "只有管理员才能开关自动禁言"
+        if enable is None:
+            # 如果没指定，返回当前状态
+            status = "开启" if sensitive_words_manager.is_auto_ban_enabled else "关闭"
+            return f"自动禁言当前状态: {status}"
+        success, msg = sensitive_words_manager.toggle_auto_ban(enable)
         return msg
 
     # 查看用户违规次数

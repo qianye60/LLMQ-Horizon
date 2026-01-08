@@ -163,6 +163,8 @@ class SensitiveWordsManager:
                 logger.error(f"加载敏感词数据失败: {e}")
 
         return {
+            "enabled": True,  # 敏感词监控总开关
+            "auto_ban_enabled": False,  # 自动禁言开关（默认关闭）
             "words": [],  # 敏感词列表
             "ban_threshold": 3,  # 禁言阈值（触发多少次后禁言）
             "ban_duration": 600,  # 禁言时长（秒），默认10分钟
@@ -312,11 +314,15 @@ class SensitiveWordsManager:
 
     def get_words_list(self) -> str:
         """获取敏感词列表"""
+        enabled = self._data.get("enabled", True)
+        auto_ban = self._data.get("auto_ban_enabled", False)
         words = self._data.get("words", [])
         threshold = self._data.get("ban_threshold", 3)
         duration = self._data.get("ban_duration", 600)
 
         lines = ["📝 敏感词设置"]
+        lines.append(f"├─ 监控状态: {'开启' if enabled else '关闭'}")
+        lines.append(f"├─ 自动禁言: {'开启' if auto_ban else '关闭'}")
         lines.append(f"├─ 禁言阈值: {threshold} 次")
         lines.append(f"├─ 禁言时长: {duration // 60} 分钟")
         lines.append(f"├─ 敏感词数量: {len(words)} 个")
@@ -326,6 +332,30 @@ class SensitiveWordsManager:
             lines.append("└─ 敏感词列表: 无")
 
         return "\n".join(lines)
+
+    def toggle_enabled(self, enable: bool) -> tuple[bool, str]:
+        """开关敏感词监控"""
+        self._data["enabled"] = enable
+        self._save_data()
+        status = "开启" if enable else "关闭"
+        return True, f"敏感词监控已{status}"
+
+    def toggle_auto_ban(self, enable: bool) -> tuple[bool, str]:
+        """开关自动禁言"""
+        self._data["auto_ban_enabled"] = enable
+        self._save_data()
+        status = "开启" if enable else "关闭"
+        return True, f"自动禁言已{status}"
+
+    @property
+    def is_enabled(self) -> bool:
+        """检查敏感词监控是否开启"""
+        return self._data.get("enabled", True)
+
+    @property
+    def is_auto_ban_enabled(self) -> bool:
+        """检查自动禁言是否开启"""
+        return self._data.get("auto_ban_enabled", False)
 
     def clear_words(self) -> tuple[bool, str]:
         """清空所有敏感词"""

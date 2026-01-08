@@ -552,6 +552,14 @@ wheels = [
 ]
 
 [[package]]
+name = "imgkit"
+version = "1.2.3"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/b0/e0c8aaafb20377eccb9aedbb9e00c21aeaac9cdc13d31d1c7532e1241bab/imgkit-1.2.3-py3-none-any.whl", hash = "sha256:cba8e3f67da6e0a5c87345a8b41605337851f9b9b75719500fa6810ecff84791", size = 10240 },
+]
+
+[[package]]
 name = "jiter"
 version = "0.8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -788,6 +796,7 @@ version = "0.1.1"
 source = { virtual = "." }
 dependencies = [
     { name = "fal-client" },
+    { name = "imgkit" },
     { name = "langchain" },
     { name = "langchain-anthropic" },
     { name = "langchain-community" },
@@ -809,6 +818,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fal-client", specifier = ">=0.5.6" },
+    { name = "imgkit", specifier = ">=1.2.3" },
     { name = "langchain", specifier = ">=0.3.10" },
     { name = "langchain-anthropic", specifier = ">=0.3.1" },
     { name = "langchain-community", specifier = ">=0.3.10" },
