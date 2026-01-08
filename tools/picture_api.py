@@ -1,34 +1,70 @@
-# tools/picture_api.py
+"""
+随机图片 API 工具
+"""
 import requests
+from pathlib import Path
+from datetime import datetime
 from langchain_core.tools import tool
 from .config import config
-import os
 
-picture = config.get("picture_api", {})
-api = picture.get("api")
+# 配置
+picture_config = config.get("picture_api", {})
+api_base = picture_config.get("api", "")
+
+# 图片保存目录
+root_path = Path(__file__).resolve().parents[1]
+temp_dir = root_path / "temp_server" / "images"
+temp_dir.mkdir(parents=True, exist_ok=True)
+
+# 支持的图片类型
+VALID_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp"}
+
 
 @tool(parse_docstring=True)
-def picture_api(select_type: str) -> str:
-    """Select a suitable image classification request random image API from the variable api_type_list based on the request, store the image on the server, and return the image link.
+def random_picture(category: str) -> str:
+    """获取随机图片
 
     Args:
-      select_type: Match the image type based on the user's request with priority. For example, "beautiful pictures" will match "beautiful", "anime pictures" will match "anime", and "shesh pictures" will match "shesh".
+        category: 图片分类，如 "beauty"(美女)、"anime"(动漫)、"scenery"(风景) 等
     """
+    if not api_base:
+        return "图片 API 未配置"
+
     try:
-      # 获取当前脚本的绝对路径
-      current_dir = os.path.dirname(os.path.abspath(__file__))
-      # 获取上级目录的路径
-      parent_dir = os.path.dirname(current_dir)
-      #请求url
-      pic_response = requests.get(api+select_type)
-      if pic_response:
-        pic_type = pic_response.url.split('.')[-1]
-        print(pic_response.url)
-        with open(parent_dir+"/temp_server/random."+pic_type, 'wb') as f:
-          f.write(pic_response.content)
-        return pic_response.url
+        # 请求图片
+        response = requests.get(
+            f"{api_base}{category}",
+            timeout=15,
+            allow_redirects=True
+        )
+        response.raise_for_status()
+
+        # 获取文件扩展名
+        url = response.url
+        ext = url.split('.')[-1].lower().split('?')[0]
+
+        if ext not in VALID_EXTENSIONS:
+            ext = "jpg"
+
+        # 生成唯一文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"random_{category}_{timestamp}.{ext}"
+        save_path = temp_dir / filename
+
+        # 保存图片
+        save_path.write_bytes(response.content)
+        print(f"图片已保存: {save_path}")
+
+        return url
+
+    except requests.exceptions.Timeout:
+        return "图片获取超时，请稍后重试"
+    except requests.exceptions.RequestException as e:
+        print(f"图片 API 请求失败: {e}")
+        return "图片获取失败"
     except Exception as e:
-      print(f"picture_api出现错误: {e}")
-      return None
-    
-tools = [picture_api]
+        print(f"图片处理出错: {e}")
+        return "图片处理出错"
+
+
+tools = [random_picture]

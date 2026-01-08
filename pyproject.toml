@@ -22,4 +22,5 @@ dependencies = [
     "langchain-groq>=0.2.2",
     "yt-dlp>=2024.12.23",
     "resend>=2.5.1",
+    "imgkit>=1.2.3",
 ]

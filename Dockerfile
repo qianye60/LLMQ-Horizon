@@ -1,8 +1,8 @@
 FROM ghcr.io/astral-sh/uv:bookworm-slim
 
-# 安装 tini 作为初始化系统
+# 安装 tini 和 wkhtmltopdf（包含wkhtmltoimage）作为HTML转图片工具
 RUN apt-get update \
-    && apt-get install -y tini ca-certificates \
+    && apt-get install -y tini ca-certificates wkhtmltopdf fonts-wqy-zenhei fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 LABEL maintainer="mgrsc <mail@occult.ac.cn>"
@@ -24,7 +24,7 @@ COPY . /app
 # 赋予 entrypoint.sh 执行权限
 RUN chmod +x /app/entrypoint.sh
 
-# 使用 uv 安装依赖
+# 使用 uv 安装依赖（包含imgkit）
 RUN uv sync --frozen --no-dev
 
 # 设置环境变量
